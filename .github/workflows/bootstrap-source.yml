@@ -15,12 +15,20 @@ jobs:
       - name: Expand source snapshot
         run: |
           set -e
+          if [ ! -f bootstrap.zip ]; then
+            echo "No bootstrap snapshot present; nothing to do."
+            exit 0
+          fi
+          cp .github/workflows/bootstrap-source.yml /tmp/bootstrap-source.yml
           rm -rf /tmp/financeai-source
           mkdir -p /tmp/financeai-source
           unzip -q bootstrap.zip -d /tmp/financeai-source
           test -f /tmp/financeai-source/finance-ai/package.json
           find . -mindepth 1 -maxdepth 1 ! -name .git ! -name bootstrap.zip -exec rm -rf {} +
           cp -a /tmp/financeai-source/finance-ai/. .
+          rm -f .github/workflows/ci.yml
+          mkdir -p .github/workflows
+          cp /tmp/bootstrap-source.yml .github/workflows/bootstrap-source.yml
           rm -f bootstrap.zip
           test -f package.json
           test -f 'src/app/(main)/page.tsx'
