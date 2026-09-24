@@ -164,3 +164,20 @@ test("modal escapes page stacking contexts through a body portal", async () => {
   assert.match(modal, /typeof document === "undefined"/);
   assert.doesNotMatch(css, /\.page-stack \{ animation: page-enter \.28s ease both; \}/);
 });
+
+
+test("transaction history opens an accessible receipt-style detail modal", async () => {
+  const finance = await read("src/modules/finance/components/finance-page.tsx");
+  const css = await read("src/app/globals.css");
+  assert.match(finance, /selectedTransaction/);
+  assert.match(finance, /transaction-clickable/);
+  assert.match(finance, /transaction-clickable-mobile/);
+  assert.match(finance, /aria-label={`Lihat detail transaksi/);
+  assert.match(finance, /transaction-receipt/);
+  assert.match(finance, /Reference ID/);
+  assert.match(finance, /formatTime\(selectedTransaction\.date\)/);
+  assert.match(finance, /event\.stopPropagation\(\)/);
+  assert.match(css, /\.transaction-receipt/);
+  assert.match(css, /\.receipt-divider/);
+  assert.match(css, /\.receipt-details/);
+});

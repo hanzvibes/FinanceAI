@@ -1365,3 +1365,97 @@ html, body, .sidebar, .topbar, .card, .stat-card, .global-search, .bottom-nav,
 @media (max-width: 680px) {
   .transaction-kicker { font-size: 10px; }
 }
+
+
+/* Clickable transaction history and receipt-style detail */
+.transaction-clickable { cursor: pointer; }
+.transaction-clickable td { transition: background-color var(--motion-fast) var(--ease-product); }
+.transaction-clickable:hover td,
+.transaction-clickable:focus-visible td { background: var(--surface-subtle); }
+.transaction-clickable:focus-visible { outline: 2px solid var(--brand); outline-offset: -2px; }
+
+.transaction-clickable-mobile {
+  cursor: pointer;
+  margin-inline: -6px;
+  padding-inline: 6px;
+  border-radius: 10px;
+  transition: background-color var(--motion-fast) var(--ease-product);
+}
+.transaction-clickable-mobile:hover,
+.transaction-clickable-mobile:focus-visible { background: var(--surface-subtle); }
+.transaction-clickable-mobile:focus-visible { outline: 2px solid var(--brand); outline-offset: 1px; }
+
+.transaction-receipt {
+  position: relative;
+  overflow: hidden;
+  padding: 20px;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+}
+.receipt-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  text-align: left;
+}
+.receipt-brand > span:last-child { display: grid; gap: 1px; }
+.receipt-brand strong { font-size: 13px; letter-spacing: -.02em; }
+.receipt-brand small { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .08em; }
+.receipt-status {
+  margin-top: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.receipt-amount {
+  display: grid;
+  justify-items: center;
+  gap: 5px;
+  padding: 18px 0 20px;
+  text-align: center;
+}
+.receipt-amount > span { color: var(--muted); font-size: 10px; font-weight: 700; }
+.receipt-amount strong {
+  font-size: clamp(28px, 6vw, 38px);
+  line-height: 1;
+  letter-spacing: -.045em;
+  font-variant-numeric: tabular-nums;
+}
+.receipt-amount small { max-width: 320px; color: var(--muted); font-size: 11px; }
+.receipt-divider { border-top: 1px dashed var(--line-strong); }
+.receipt-details { display: grid; gap: 0; margin: 0; padding: 10px 0; }
+.receipt-details > div {
+  display: grid;
+  grid-template-columns: minmax(92px, .75fr) minmax(0, 1.25fr);
+  gap: 18px;
+  padding: 8px 0;
+  border-bottom: 1px solid color-mix(in srgb, var(--line) 65%, transparent);
+}
+.receipt-details > div:last-child { border-bottom: 0; }
+.receipt-details dt { color: var(--muted); font-size: 10px; }
+.receipt-details dd { margin: 0; text-align: right; font-size: 11px; font-weight: 700; overflow-wrap: anywhere; }
+.receipt-note {
+  margin: 4px 0 14px;
+  padding: 11px 12px;
+  border-radius: 10px;
+  background: var(--surface-subtle);
+}
+.receipt-note span { color: var(--muted); font-size: 9px; font-weight: 700; }
+.receipt-note p { margin: 4px 0 0; font-size: 11px; line-height: 1.55; white-space: pre-wrap; }
+.receipt-reference { display: grid; justify-items: center; gap: 4px; padding: 15px 0 4px; text-align: center; }
+.receipt-reference span { color: var(--muted); font-size: 9px; text-transform: uppercase; letter-spacing: .06em; }
+.receipt-reference code { max-width: 100%; color: var(--ink); font-size: 9px; overflow-wrap: anywhere; }
+.receipt-footnote { margin: 4px 0 16px; color: var(--muted-2); font-size: 9px; text-align: center; }
+.receipt-actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.receipt-actions .button { width: 100%; }
+
+@media (max-width: 480px) {
+  .transaction-receipt { padding: 17px 15px; border-radius: 12px; }
+  .receipt-details > div { grid-template-columns: 92px minmax(0,1fr); gap: 12px; }
+  .receipt-actions { grid-template-columns: 1fr; }
+}
