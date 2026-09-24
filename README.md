@@ -1,3 +1,3 @@
 # FinanceAI
 
-Initial repository bootstrap. Full source follows in the next commit.
+Source bootstrap is staged and ready for extraction.
