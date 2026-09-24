@@ -340,3 +340,15 @@ test("small-screen navigation does not trigger browser auto-zoom", async () => {
   assert.match(shell, /document\.activeElement\.blur\(\)/);
   assert.match(search, /document\.activeElement\.blur\(\)/);
 });
+
+
+test("finance ledger switches to a compact mobile feed at the same breakpoint as bottom navigation", async () => {
+  const finance = await read("src/modules/finance/components/finance-page.tsx");
+  const css = await read("src/app/globals.css");
+  assert.match(css, /@media \(max-width: 900px\)[\s\S]*?\.ledger-card \.table-wrap \{ display: none; \}/);
+  assert.match(css, /@media \(max-width: 900px\)[\s\S]*?\.ledger-card \.mobile-transactions \{ display: block; \}/);
+  assert.match(css, /\.ledger-card \.transaction-row[\s\S]*?min-height:\s*54px/);
+  assert.doesNotMatch(finance, /mobile-row-actions/);
+  assert.match(finance, /removeTransaction\(id\)/);
+  assert.match(finance, />Hapus<\/button>/);
+});
