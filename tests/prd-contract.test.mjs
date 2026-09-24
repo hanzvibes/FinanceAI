@@ -234,14 +234,17 @@ test("cashflow chart uses a plain-language premium fintech hierarchy", async () 
 });
 
 
-test("dashboard wallet and activity cards stay compact and balanced at tablet widths", async () => {
+
+
+test("dashboard gives activity more space while keeping wallet summary compact", async () => {
   const dashboard = await read("src/modules/dashboard/components/dashboard-page.tsx");
   const css = await read("src/app/globals.css");
-  assert.match(dashboard, /dashboard-transaction-list/);
-  assert.match(dashboard, /dashboard-transaction-meta/);
-  assert.match(dashboard, /transaction-type-dot/);
-  assert.match(css, /Dashboard secondary cards: denser/);
-  assert.match(css, /@media \(min-width: 760px\) and \(max-width: 1180px\)[\s\S]*?dashboard-wallet-card[\s\S]*?grid-column:\s*span 1/);
-  assert.match(css, /dashboard-wallet-card \.wallet-strip[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)/);
-  assert.match(css, /dashboard-activity-card \.dashboard-transaction-row/);
+  assert.match(dashboard, /Ringkasan saldo wallet yang sedang digunakan/);
+  assert.match(dashboard, /Aktivitas uang terbaru dari ledger/);
+  assert.doesNotMatch(dashboard, /transaction-type-dot/);
+  assert.match(css, /dashboard-wallet-card \{ grid-column: span 1; \}/);
+  assert.match(css, /dashboard-activity-card \{ grid-column: span 3; \}/);
+  assert.match(css, /dashboard-wallet-card \.wallet-strip[\s\S]*?grid-template-columns:\s*1fr/);
+  assert.match(css, /dashboard-wallet-card \.wallet-chip > span:last-child[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto/);
+  assert.match(css, /dashboard-activity-card \.dashboard-transaction-row[\s\S]*?min-height:\s*48px/);
 });
