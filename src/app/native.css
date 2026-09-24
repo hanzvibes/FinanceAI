@@ -350,8 +350,8 @@ html, body { overscroll-behavior-y: none; }
 }
 .wallet-deck-card.next {
   z-index: 3;
-  transform: translate3d(10px, 14px, 0) scale(.96);
-  opacity: .95;
+  transform: translate3d(10px, 13px, 0) scale(.965);
+  opacity: .96;
 }
 .wallet-deck-card.prev {
   z-index: 3;
@@ -375,7 +375,7 @@ html, body { overscroll-behavior-y: none; }
 }
 .wallet-deck-card.far {
   z-index: 2;
-  transform: translate3d(0, 26px, 0) scale(.925);
+  transform: translate3d(16px, 26px, 0) scale(.925);
   opacity: .78;
 }
 

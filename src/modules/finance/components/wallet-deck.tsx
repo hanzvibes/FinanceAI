@@ -39,8 +39,8 @@ function renderWalletFrame(stage: HTMLDivElement, dragX: number, width: number) 
 
     if (child.classList.contains("next")) {
       const lift = towardNext ? progress : 0;
-      child.style.transform = `translate3d(${10 * (1 - lift)}px, ${14 * (1 - lift)}px, 0) scale(${0.96 + 0.04 * lift})`;
-      child.style.opacity = String(0.95 + 0.05 * lift);
+      child.style.transform = `translate3d(${10 * (1 - lift)}px, ${13 * (1 - lift)}px, 0) scale(${0.965 + 0.035 * lift})`;
+      child.style.opacity = String(0.96 + 0.04 * lift);
       continue;
     }
 
@@ -52,9 +52,8 @@ function renderWalletFrame(stage: HTMLDivElement, dragX: number, width: number) 
     }
 
     if (child.classList.contains("next2")) {
-      const lift = towardNext ? progress : 0;
-      child.style.transform = `translate3d(${16 - 6 * lift}px, ${26 - 12 * lift}px, 0) scale(${0.925 + 0.035 * lift})`;
-      child.style.opacity = String(0.78 + 0.17 * lift);
+      // The forward depth card stays anchored during a left swipe.
+      // React rebases it to "next" before paint after the commit.
       continue;
     }
 
@@ -66,9 +65,9 @@ function renderWalletFrame(stage: HTMLDivElement, dragX: number, width: number) 
     }
 
     if (child.classList.contains("far")) {
-      const signedLift = towardNext ? progress : towardPrev ? -progress : 0;
-      child.style.transform = `translate3d(${10 * signedLift}px, ${26 - 12 * progress}px, 0) scale(${0.925 + 0.035 * progress})`;
-      child.style.opacity = String(0.78 + 0.17 * progress);
+      const lift = towardPrev ? progress : 0;
+      child.style.transform = `translate3d(${16 - 26 * lift}px, ${26 - 12 * lift}px, 0) scale(${0.925 + 0.035 * lift})`;
+      child.style.opacity = String(0.78 + 0.17 * lift);
       continue;
     }
 

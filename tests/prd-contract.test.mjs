@@ -437,7 +437,7 @@ test("swipe engine avoids timer-driven card swaps and per-frame React rendering"
 });
 
 
-test("swipe decks mirror forward and backward depth so right swipes never mount a visible card late", async () => {
+test("swipe decks preserve the proven left path while pre-rendering backward depth for right swipes", async () => {
   const wallet = await read("src/modules/finance/components/wallet-deck.tsx");
   const receipt = await read("src/modules/finance/components/transaction-receipt-deck.tsx");
   const css = await read("src/app/native.css");
@@ -449,9 +449,15 @@ test("swipe decks mirror forward and backward depth so right swipes never mount 
     assert.match(source, /classList\.contains\("prev2"\)/);
   }
 
-  assert.match(css, /\.wallet-deck-card\.next[\s\S]*?translate3d\(10px, 14px, 0\) scale\(\.96\)[\s\S]*?opacity:\s*\.95/);
+  assert.match(css, /\.wallet-deck-card\.next[\s\S]*?translate3d\(10px, 13px, 0\) scale\(\.965\)[\s\S]*?opacity:\s*\.96/);
   assert.match(css, /\.wallet-deck-card\.prev[\s\S]*?translate3d\(-10px, 14px, 0\) scale\(\.96\)[\s\S]*?opacity:\s*\.95/);
   assert.match(css, /\.wallet-deck-card\.prev2/);
   assert.match(css, /\.receipt-deck-card\.prev2/);
+  assert.match(wallet, /forward depth card stays anchored/);
+  assert.match(receipt, /Preserve the proven left-swipe path/);
+  assert.doesNotMatch(wallet, /classList\.contains\("next2"\)[\s\S]{0,220}?towardNext/);
+  assert.doesNotMatch(receipt, /classList\.contains\("next2"\)[\s\S]{0,260}?towardNext/);
+  assert.match(wallet, /classList\.contains\("far"\)[\s\S]{0,220}?towardPrev/);
+  assert.match(receipt, /classList\.contains\("far"\)[\s\S]{0,240}?towardPrev/);
   assert.match(css, /opacity var\(--deck-settle-duration/);
 });

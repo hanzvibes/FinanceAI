@@ -64,9 +64,8 @@ function renderReceiptFrame(stage: HTMLDivElement, dragX: number, width: number)
     }
 
     if (child.classList.contains("next2")) {
-      const lift = towardNext ? progress : 0;
-      child.style.transform = `translate3d(${52 * lift}px, ${30 - 13 * lift}px, 0) scale(${0.875 + 0.05 * lift}) rotate(${1.5 * lift}deg)`;
-      child.style.opacity = String(0.48 + 0.4 * lift);
+      // Preserve the proven left-swipe path: the second forward receipt
+      // remains parked until the active index is rebased before paint.
       continue;
     }
 
@@ -78,9 +77,9 @@ function renderReceiptFrame(stage: HTMLDivElement, dragX: number, width: number)
     }
 
     if (child.classList.contains("far")) {
-      const signedLift = towardNext ? progress : towardPrev ? -progress : 0;
-      child.style.transform = `translate3d(${52 * signedLift}px, ${30 - 13 * progress}px, 0) scale(${0.875 + 0.05 * progress}) rotate(${1.5 * signedLift}deg)`;
-      child.style.opacity = String(0.48 + 0.4 * progress);
+      const lift = towardPrev ? progress : 0;
+      child.style.transform = `translate3d(${-52 * lift}px, ${30 - 13 * lift}px, 0) scale(${0.875 + 0.05 * lift}) rotate(${-1.5 * lift}deg)`;
+      child.style.opacity = String(0.48 + 0.4 * lift);
       continue;
     }
 
