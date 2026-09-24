@@ -23,7 +23,7 @@ jobs:
           cp -a /tmp/financeai-source/finance-ai/. .
           rm -f bootstrap.zip
           test -f package.json
-          test -f src/app/page.tsx
+          test -f 'src/app/(main)/page.tsx'
 
       - name: Commit full source
         run: |
