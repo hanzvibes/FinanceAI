@@ -235,3 +235,21 @@ test("wallet cards use the compact responsive footprint", async () => {
   assert.match(css, /\.wallet-credit-surface[\s\S]*?max-width:\s*320px/);
   assert.match(css, /@media \(max-width: 520px\)[\s\S]*?\.wallet-grid \{ grid-template-columns: 1fr; \}/);
 });
+
+
+test("cashflow chart uses a plain-language premium fintech hierarchy", async () => {
+  const chart = await read("src/modules/finance/components/cashflow-chart.tsx");
+  const finance = await read("src/modules/finance/components/finance-page.tsx");
+  const css = await read("src/app/globals.css");
+  assert.match(chart, /cashflow-month-summary/);
+  assert.match(chart, /cashflow-period-summary/);
+  assert.match(chart, />Sisa</);
+  assert.match(chart, /Masih ada uang tersisa bulan ini/);
+  assert.match(chart, /Tap bulan untuk melihat detail/);
+  assert.match(finance, /3 Bulan/);
+  assert.match(finance, /6 Bulan/);
+  assert.match(finance, /1 Tahun/);
+  assert.match(css, /\.cashflow-month-summary/);
+  assert.match(css, /\.period-balance/);
+  assert.match(css, /\.cashflow-chart\.fintech/);
+});

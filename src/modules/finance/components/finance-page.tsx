@@ -194,11 +194,10 @@ export function FinancePage() {
 
     <section className="analytics-grid">
       <article className="card card-secondary analytics-card">
-        <div className="card-head analytics-head">
-          <div><h2>Arus kas</h2><p className="section-helper">Perbandingan pemasukan dan pengeluaran dari ledger asli.</p></div>
+        <div className="card-head analytics-head fintech">
+          <div><h2>Arus kas</h2><p className="section-helper">Lihat berapa uang yang masuk, keluar, dan tersisa setiap bulan.</p></div>
           <div className="analytics-actions">
-            <div className="period-switch" role="group" aria-label="Periode grafik">{([3, 6, 12] as const).map((months) => <button type="button" key={months} className={chartMonths === months ? "active" : ""} aria-pressed={chartMonths === months} onClick={() => setChartMonths(months)}>{months}M</button>)}</div>
-            <span className={`cashflow-badge ${summary.savings < 0 ? "negative" : "positive"}`}>{summary.savings < 0 ? "Defisit" : "Surplus"} {formatCurrency(Math.abs(summary.savings), true)}</span>
+            <div className="period-switch fintech" role="group" aria-label="Periode grafik">{([[3, "3 Bulan"], [6, "6 Bulan"], [12, "1 Tahun"]] as const).map(([months, label]) => <button type="button" key={months} className={chartMonths === months ? "active" : ""} aria-pressed={chartMonths === months} onClick={() => setChartMonths(months)}>{label}</button>)}</div>
           </div>
         </div>
         <CashflowChart data={cashflow}/>

@@ -1327,37 +1327,120 @@ html, body, .sidebar, .topbar, .card, .stat-card, .global-search, .bottom-nav,
   .modal-close { width: 40px; height: 40px; }
 }
 
-/* Finance chart: quieter grid, explicit active period, truthful detail. */
-.cashflow-figure { margin: 0; }
-.chart-spotlight {
+/* Finance chart: premium fintech treatment with plain-language hierarchy. */
+.cashflow-figure.fintech { margin: 0; display: grid; gap: 12px; }
+.analytics-head.fintech { align-items: center; }
+.period-switch.fintech { padding: 3px; border: 1px solid var(--line); background: var(--surface-subtle); }
+.period-switch.fintech button { min-width: 72px; padding-inline: 12px; }
+.cashflow-month-summary {
   display: grid;
-  grid-template-columns: repeat(4, minmax(0,1fr));
-  gap: 8px;
-  margin: -2px 0 12px;
-  padding: 11px 12px;
+  grid-template-columns: minmax(180px, .9fr) minmax(0, 2.1fr);
+  gap: 12px;
+  padding: 14px;
   border: 1px solid var(--line);
-  border-radius: 11px;
-  background: var(--surface-subtle);
+  border-radius: 16px;
+  background: linear-gradient(135deg, color-mix(in srgb, var(--brand-soft) 58%, white), var(--surface) 54%);
 }
-.chart-spotlight > div { display: grid; gap: 2px; min-width: 0; }
-.chart-spotlight span { color: var(--muted); font-size: 9px; font-weight: 650; }
-.chart-spotlight strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 12px; }
-.chart-gridline line { stroke: color-mix(in srgb, var(--line) 72%, transparent); stroke-dasharray: 3 5; }
+.cashflow-month-copy { display: grid; align-content: center; gap: 3px; padding-right: 12px; border-right: 1px solid var(--line); }
+.cashflow-month-copy span { color: var(--muted); font-size: 9px; font-weight: 750; }
+.cashflow-month-copy strong { font-size: 20px; line-height: 1.1; letter-spacing: -.035em; }
+.cashflow-month-copy small { color: var(--muted); font-size: 10px; line-height: 1.45; }
+.cashflow-month-metrics { display: grid; grid-template-columns: repeat(3, minmax(0,1fr)); gap: 8px; }
+.cashflow-month-metrics > div {
+  display: grid;
+  align-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 10px 11px;
+  border-radius: 12px;
+  background: rgba(255,255,255,.68);
+  border: 1px solid color-mix(in srgb, var(--line) 72%, transparent);
+}
+.cashflow-month-metrics > div.remaining { background: color-mix(in srgb, var(--brand-soft) 72%, white); }
+.cashflow-month-metrics span { color: var(--muted); font-size: 9px; font-weight: 700; }
+.cashflow-month-metrics strong { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; font-variant-numeric: tabular-nums; }
+.cashflow-period-summary {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 8px 16px;
+  padding-inline: 2px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.cashflow-period-summary > span { display: inline-flex; align-items: center; gap: 6px; }
+.cashflow-period-summary strong { color: var(--ink); font-size: 10px; font-variant-numeric: tabular-nums; }
+.period-balance {
+  margin-left: auto;
+  min-height: 28px;
+  padding: 0 9px;
+  border-radius: 999px;
+  font-weight: 800;
+}
+.period-balance.positive { color: var(--success); background: var(--success-soft); }
+.period-balance.negative { color: var(--danger); background: var(--danger-soft); }
+.cashflow-chart-wrap.fintech {
+  min-width: 0;
+  padding: 8px 8px 2px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--surface);
+}
+.cashflow-chart.fintech { display: block; width: 100%; height: auto; min-height: 236px; overflow: visible; }
+.chart-gridline line { stroke: color-mix(in srgb, var(--line) 84%, transparent); stroke-dasharray: 2 7; }
+.chart-gridline text, .chart-label { fill: var(--muted); font-size: 9px; font-weight: 600; }
 .chart-baseline { stroke: var(--line-strong); stroke-width: 1; }
-.chart-hit-area { fill: transparent; }
-.chart-group { cursor: default; outline: none; }
+.chart-hit-area { fill: transparent; transition: fill var(--motion-fast) var(--ease-product), opacity var(--motion-fast) var(--ease-product); }
+.chart-group { cursor: pointer; outline: none; }
 .chart-group.active .chart-hit-area,
-.chart-group:focus-visible .chart-hit-area { fill: var(--brand-soft); opacity: .55; }
-.chart-group:focus-visible .chart-hit-area { stroke: var(--brand); stroke-width: 1.25; }
-.chart-group:not(.active) .chart-bar { opacity: .62; }
-.chart-group.active .chart-bar { opacity: 1; }
-.chart-bar.income { fill: var(--income); }
-.chart-bar.expense { fill: var(--expense); }
-.chart-legend { min-height: 28px; }
+.chart-group:focus-visible .chart-hit-area { fill: color-mix(in srgb, var(--brand-soft) 72%, transparent); opacity: .86; }
+.chart-group:focus-visible .chart-hit-area { stroke: var(--brand); stroke-width: 1; }
+.chart-bar { transform-box: fill-box; transform-origin: bottom; transition: opacity .16s ease, transform .18s ease; }
+.chart-group:not(.active) .chart-bar { opacity: .68; }
+.chart-group.active .chart-bar { opacity: 1; transform: scaleY(1.015); }
+.chart-bar.income { fill: color-mix(in srgb, var(--income) 86%, white); }
+.chart-bar.expense { fill: color-mix(in srgb, var(--expense) 78%, white); }
+.chart-group.active .chart-label { fill: var(--ink); font-weight: 800; }
+.chart-legend.fintech {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 28px;
+  color: var(--muted);
+  font-size: 10px;
+}
+.chart-legend.fintech span { display: inline-flex; align-items: center; gap: 6px; }
 .chart-hint { margin-left: auto; color: var(--muted-2); }
 .chart-empty { min-height: 220px; display: grid; place-items: center; align-content: center; gap: 4px; color: var(--muted); text-align: center; }
 .chart-empty strong { color: var(--ink); font-size: 13px; }
 .chart-empty span { font-size: 11px; }
+
+@media (max-width: 680px) {
+  .analytics-head.fintech { align-items: stretch; gap: 12px; }
+  .analytics-head.fintech .analytics-actions { width: 100%; }
+  .period-switch.fintech { width: 100%; display: grid; grid-template-columns: repeat(3, 1fr); }
+  .period-switch.fintech button { min-width: 0; padding-inline: 8px; }
+  .cashflow-month-summary { grid-template-columns: 1fr; gap: 8px; padding: 11px; }
+  .cashflow-month-copy { padding: 0 0 9px; border-right: 0; border-bottom: 1px solid var(--line); }
+  .cashflow-month-copy strong { font-size: 18px; }
+  .cashflow-month-metrics { grid-template-columns: repeat(3, minmax(0,1fr)); gap: 6px; }
+  .cashflow-month-metrics > div { padding: 8px; }
+  .cashflow-month-metrics strong { font-size: 11px; }
+  .cashflow-period-summary { gap: 7px 12px; }
+  .period-balance { margin-left: 0; }
+  .chart-hint { display: none; }
+  .chart-legend.fintech { gap: 12px; }
+  .cashflow-chart-wrap.fintech { margin-inline: -2px; overflow-x: auto; }
+  .cashflow-chart.fintech { min-width: 560px; }
+}
+
+@media (max-width: 420px) {
+  .cashflow-month-metrics { grid-template-columns: 1fr; }
+  .cashflow-month-metrics > div { grid-template-columns: 1fr auto; align-items: center; }
+  .cashflow-month-metrics span { align-self: center; }
+  .cashflow-period-summary { display: grid; grid-template-columns: 1fr; }
+  .period-balance { width: fit-content; }
+}
 
 /* Navigation architecture: full sidebar, then compact rail, then floating mobile nav. */
 .navigation-rail .nav-link { position: relative; }
@@ -1443,8 +1526,6 @@ html, body, .sidebar, .topbar, .card, .stat-card, .global-search, .bottom-nav,
   .modal-body { padding-top: 15px; }
   .modal-close { width: 40px; height: 40px; }
   @keyframes sheet-enter { from { opacity: .8; transform: translateY(24px); } to { opacity: 1; transform: none; } }
-
-  .chart-spotlight { grid-template-columns: 1fr 1fr; }
   .chart-hint { display: none; }
   .chart-legend { gap: 12px; }
   .cashflow-chart-wrap { margin-inline: -4px; }
@@ -1456,18 +1537,13 @@ html, body, .sidebar, .topbar, .card, .stat-card, .global-search, .bottom-nav,
 }
 
 @media (max-width: 420px) {
-  .chart-spotlight { padding: 10px; }
-  .chart-spotlight strong { font-size: 11px; }
   .card-compact { padding: 16px; }
   .hero-number { font-size: 32px; }
 }
 
 :root[data-theme="dark"] .hero-primary-action .button { background: #dcece5; color: #14382f; }
-:root[data-theme="dark"] .chart-group.active .chart-hit-area,
-:root[data-theme="dark"] .chart-group:focus-visible .chart-hit-area { fill: #1c3028; }
 :root[data-theme="dark"] .empty-panel,
 :root[data-theme="dark"] .empty-inline,
-:root[data-theme="dark"] .chart-spotlight { background: var(--surface-subtle); }
 
 @media (prefers-reduced-motion: reduce) {
   .modal-backdrop,
