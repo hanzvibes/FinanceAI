@@ -145,3 +145,12 @@ test("wallet form has no color picker and assigns accents automatically", async 
   assert.doesNotMatch(financePage, /form\.get\("accent"\)/);
   assert.match(financePage, /walletTypeAccents/);
 });
+
+
+test("modal matches the mobile navigation breakpoint and stays inside the dynamic viewport", async () => {
+  const css = await read("src/app/globals.css");
+  assert.match(css, /max-height:\s*min\(760px, calc\(100dvh - 48px\)\)/);
+  assert.match(css, /@media \(max-width: 900px\) \{[\s\S]*?\.modal-backdrop \{[\s\S]*?align-items:\s*end;[\s\S]*?\.modal-panel \{[\s\S]*?max-height:\s*min\(92dvh, 820px\)/);
+  assert.match(css, /env\(safe-area-inset-top\)/);
+  assert.match(css, /env\(safe-area-inset-bottom\)/);
+});
