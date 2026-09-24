@@ -435,3 +435,23 @@ test("swipe engine avoids timer-driven card swaps and per-frame React rendering"
   assert.doesNotMatch(wallet, /SETTLE_MS/);
   assert.doesNotMatch(receipt, /SETTLE_MS/);
 });
+
+
+test("swipe decks mirror forward and backward depth so right swipes never mount a visible card late", async () => {
+  const wallet = await read("src/modules/finance/components/wallet-deck.tsx");
+  const receipt = await read("src/modules/finance/components/transaction-receipt-deck.tsx");
+  const css = await read("src/app/native.css");
+
+  for (const source of [wallet, receipt]) {
+    assert.match(source, /"prev2"/);
+    assert.match(source, /"far"/);
+    assert.match(source, /forward === count - 2/);
+    assert.match(source, /classList\.contains\("prev2"\)/);
+  }
+
+  assert.match(css, /\.wallet-deck-card\.next[\s\S]*?translate3d\(10px, 14px, 0\) scale\(\.96\)[\s\S]*?opacity:\s*\.95/);
+  assert.match(css, /\.wallet-deck-card\.prev[\s\S]*?translate3d\(-10px, 14px, 0\) scale\(\.96\)[\s\S]*?opacity:\s*\.95/);
+  assert.match(css, /\.wallet-deck-card\.prev2/);
+  assert.match(css, /\.receipt-deck-card\.prev2/);
+  assert.match(css, /opacity var\(--deck-settle-duration/);
+});

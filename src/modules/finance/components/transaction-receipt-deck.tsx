@@ -6,7 +6,7 @@ import type { Transaction, Wallet } from "@/shared/types/domain";
 import { formatCurrency, formatDate, formatTime } from "@/shared/utils/format";
 import { useSwipeDeck } from "@/shared/hooks/use-swipe-deck";
 
-type CardRole = "current" | "next" | "next2" | "prev" | "neighbor";
+type CardRole = "current" | "next" | "next2" | "prev" | "prev2" | "far" | "neighbor";
 
 type TransactionReceiptDeckProps = {
   transactions: Transaction[];
@@ -63,6 +63,27 @@ function renderReceiptFrame(stage: HTMLDivElement, dragX: number, width: number)
       continue;
     }
 
+    if (child.classList.contains("next2")) {
+      const lift = towardNext ? progress : 0;
+      child.style.transform = `translate3d(${52 * lift}px, ${30 - 13 * lift}px, 0) scale(${0.875 + 0.05 * lift}) rotate(${1.5 * lift}deg)`;
+      child.style.opacity = String(0.48 + 0.4 * lift);
+      continue;
+    }
+
+    if (child.classList.contains("prev2")) {
+      const lift = towardPrev ? progress : 0;
+      child.style.transform = `translate3d(${-52 * lift}px, ${30 - 13 * lift}px, 0) scale(${0.875 + 0.05 * lift}) rotate(${-1.5 * lift}deg)`;
+      child.style.opacity = String(0.48 + 0.4 * lift);
+      continue;
+    }
+
+    if (child.classList.contains("far")) {
+      const signedLift = towardNext ? progress : towardPrev ? -progress : 0;
+      child.style.transform = `translate3d(${52 * signedLift}px, ${30 - 13 * progress}px, 0) scale(${0.875 + 0.05 * progress}) rotate(${1.5 * signedLift}deg)`;
+      child.style.opacity = String(0.48 + 0.4 * progress);
+      continue;
+    }
+
     if (child.classList.contains("neighbor")) {
       child.style.transform = `translate3d(0, ${17 * (1 - progress)}px, 0) scale(${0.925 + 0.075 * progress})`;
       child.style.opacity = String(0.88 + 0.12 * progress);
@@ -113,7 +134,9 @@ export function TransactionReceiptDeck({
     const forward = (index - activeIndex + count) % count;
     if (forward === 1) return "next";
     if (forward === count - 1) return "prev";
-    if (count > 3 && forward === 2) return "next2";
+    if (count === 4 && forward === 2) return "far";
+    if (count > 4 && forward === 2) return "next2";
+    if (count > 4 && forward === count - 2) return "prev2";
     return null;
   }
 

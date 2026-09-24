@@ -7,7 +7,7 @@ import { formatCurrency } from "@/shared/utils/format";
 import { useSwipeDeck } from "@/shared/hooks/use-swipe-deck";
 
 type WalletWithBalance = Wallet & { balance: number };
-type CardRole = "current" | "next" | "next2" | "prev" | "neighbor";
+type CardRole = "current" | "next" | "next2" | "prev" | "prev2" | "far" | "neighbor";
 
 type WalletDeckProps = {
   wallets: WalletWithBalance[];
@@ -39,15 +39,36 @@ function renderWalletFrame(stage: HTMLDivElement, dragX: number, width: number) 
 
     if (child.classList.contains("next")) {
       const lift = towardNext ? progress : 0;
-      child.style.transform = `translate3d(${10 * (1 - lift)}px, ${13 * (1 - lift)}px, 0) scale(${0.965 + 0.035 * lift})`;
-      child.style.opacity = String(0.96 + 0.04 * lift);
+      child.style.transform = `translate3d(${10 * (1 - lift)}px, ${14 * (1 - lift)}px, 0) scale(${0.96 + 0.04 * lift})`;
+      child.style.opacity = String(0.95 + 0.05 * lift);
       continue;
     }
 
     if (child.classList.contains("prev")) {
       const lift = towardPrev ? progress : 0;
-      child.style.transform = `translate3d(${-10 * (1 - lift)}px, ${15 * (1 - lift)}px, 0) scale(${0.955 + 0.045 * lift})`;
-      child.style.opacity = String(0.93 + 0.07 * lift);
+      child.style.transform = `translate3d(${-10 * (1 - lift)}px, ${14 * (1 - lift)}px, 0) scale(${0.96 + 0.04 * lift})`;
+      child.style.opacity = String(0.95 + 0.05 * lift);
+      continue;
+    }
+
+    if (child.classList.contains("next2")) {
+      const lift = towardNext ? progress : 0;
+      child.style.transform = `translate3d(${16 - 6 * lift}px, ${26 - 12 * lift}px, 0) scale(${0.925 + 0.035 * lift})`;
+      child.style.opacity = String(0.78 + 0.17 * lift);
+      continue;
+    }
+
+    if (child.classList.contains("prev2")) {
+      const lift = towardPrev ? progress : 0;
+      child.style.transform = `translate3d(${-16 + 6 * lift}px, ${26 - 12 * lift}px, 0) scale(${0.925 + 0.035 * lift})`;
+      child.style.opacity = String(0.78 + 0.17 * lift);
+      continue;
+    }
+
+    if (child.classList.contains("far")) {
+      const signedLift = towardNext ? progress : towardPrev ? -progress : 0;
+      child.style.transform = `translate3d(${10 * signedLift}px, ${26 - 12 * progress}px, 0) scale(${0.925 + 0.035 * progress})`;
+      child.style.opacity = String(0.78 + 0.17 * progress);
       continue;
     }
 
@@ -93,7 +114,9 @@ export function WalletDeck({ wallets, typeLabels, onEdit, onToggleArchive }: Wal
     const forward = (index - activeIndex + count) % count;
     if (forward === 1) return "next";
     if (forward === count - 1) return "prev";
-    if (count > 3 && forward === 2) return "next2";
+    if (count === 4 && forward === 2) return "far";
+    if (count > 4 && forward === 2) return "next2";
+    if (count > 4 && forward === count - 2) return "prev2";
     return null;
   }
 
