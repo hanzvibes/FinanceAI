@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { categorySpending, financeSummary, monthlyCashflow, walletBalance } from "@/modules/finance/calculations";
 import { CashflowChart } from "@/modules/finance/components/cashflow-chart";
 import { WalletDeck } from "@/modules/finance/components/wallet-deck";
+import { TransactionReceiptDeck } from "@/modules/finance/components/transaction-receipt-deck";
 import { Icon } from "@/shared/components/ui/icon";
 import { Modal } from "@/shared/components/ui/modal";
 import { ConfirmSheet } from "@/shared/components/ui/confirm-sheet";
@@ -45,21 +46,6 @@ function datetimeLocal(value: string) {
   const date = new Date(value);
   const offset = date.getTimezoneOffset();
   return new Date(date.getTime() - offset * 60000).toISOString().slice(0, 16);
-}
-
-function localDayKey(value: string) {
-  const date = new Date(value);
-  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, "0")}-${String(date.getDate()).padStart(2, "0")}`;
-}
-
-function dayLabel(key: string, today: Date) {
-  const todayKey = localDayKey(today.toISOString());
-  const yesterday = new Date(today);
-  yesterday.setDate(today.getDate() - 1);
-  const yesterdayKey = localDayKey(yesterday.toISOString());
-  if (key === todayKey) return "Hari ini";
-  if (key === yesterdayKey) return "Kemarin";
-  return formatDate(`${key}T12:00:00`, { weekday: "long", day: "numeric", month: "long" });
 }
 
 export function FinancePage() {
@@ -118,17 +104,6 @@ export function FinancePage() {
     if (sortBy === "amount-asc") return a.amount - b.amount;
     return b.date.localeCompare(a.date);
   }), [state.transactions, query, typeFilter, walletFilter, categoryFilter, dateFrom, dateTo, minAmount, maxAmount, sortBy]);
-
-  const groupedTransactions = useMemo(() => {
-    const groups = new Map<string, Transaction[]>();
-    for (const transaction of transactions) {
-      const key = localDayKey(transaction.date);
-      const items = groups.get(key);
-      if (items) items.push(transaction);
-      else groups.set(key, [transaction]);
-    }
-    return Array.from(groups, ([key, items]) => ({ key, items }));
-  }, [transactions]);
 
   const activeFilterCount = [query, typeFilter !== "all", walletFilter !== "all", categoryFilter !== "all", dateFrom, dateTo, minAmount, maxAmount, sortBy !== "date-desc"].filter(Boolean).length;
 
@@ -234,17 +209,22 @@ export function FinancePage() {
     </section>
 
     <section className="card card-secondary ledger-card">
-      <div className="card-head transaction-head"><div><h2>Transaksi</h2><p className="section-helper">{transactions.length} transaksi{transactions.length !== state.transactions.length ? ` dari ${state.transactions.length}` : ""}</p></div>{activeFilterCount > 0 && <button type="button" className="filter-reset-inline" onClick={clearFilters}>{activeFilterCount} filter aktif · reset</button>}</div>
+      <div className="card-head transaction-head"><div><h2>Riwayat transaksi</h2><p className="section-helper">{transactions.length} transaksi{transactions.length !== state.transactions.length ? ` dari ${state.transactions.length}` : ""} · geser struk ke kiri atau kanan</p></div>{activeFilterCount > 0 && <button type="button" className="filter-reset-inline" onClick={clearFilters}>{activeFilterCount} filter aktif · reset</button>}</div>
       <div className="type-filter-row" role="group" aria-label="Filter cepat tipe transaksi">{[["all", "Semua"], ["income", "Pemasukan"], ["expense", "Pengeluaran"], ["transfer", "Transfer"]].map(([value, label]) => <button type="button" key={value} className={typeFilter === value ? "active" : ""} aria-pressed={typeFilter === value} onClick={() => setTypeFilter(value)}>{label}</button>)}</div>
       <details className="filter-disclosure" open={activeFilterCount > (typeFilter !== "all" ? 1 : 0)}>
         <summary>Filter lanjutan <span>{activeFilterCount ? `${activeFilterCount} aktif` : "opsional"}</span></summary>
         <div className="filter-grid"><label><span>Cari</span><input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Deskripsi, kategori, catatan"/></label><label><span>Wallet</span><select value={walletFilter} onChange={(e) => setWalletFilter(e.target.value)}><option value="all">Semua</option>{state.wallets.map((wallet) => <option value={wallet.id} key={wallet.id}>{wallet.name}</option>)}</select></label><label><span>Kategori</span><select value={categoryFilter} onChange={(e) => setCategoryFilter(e.target.value)}><option value="all">Semua</option>{categories.map((category) => <option key={category}>{category}</option>)}</select></label><label><span>Dari</span><input type="date" value={dateFrom} onChange={(e) => setDateFrom(e.target.value)}/></label><label><span>Sampai</span><input type="date" value={dateTo} onChange={(e) => setDateTo(e.target.value)}/></label><label><span>Min nominal</span><input type="number" inputMode="numeric" min="0" value={minAmount} onChange={(e) => setMinAmount(e.target.value)}/></label><label><span>Max nominal</span><input type="number" inputMode="numeric" min="0" value={maxAmount} onChange={(e) => setMaxAmount(e.target.value)}/></label><label><span>Urutkan</span><select value={sortBy} onChange={(e) => setSortBy(e.target.value)}><option value="date-desc">Terbaru</option><option value="date-asc">Terlama</option><option value="amount-desc">Nominal terbesar</option><option value="amount-asc">Nominal terkecil</option></select></label><button type="button" className="button ghost filter-clear" onClick={clearFilters}>Reset filter</button></div>
       </details>
 
-      {transactions.length ? <>
-        <div className="table-wrap"><table className="data-table"><thead><tr><th>Aktivitas</th><th>Kategori</th><th>Wallet</th><th>Tanggal</th><th className="right">Nominal</th><th>Aksi</th></tr></thead><tbody>{transactions.map((tx) => { const wallet = walletById.get(tx.walletId); return <tr key={tx.id} className="transaction-clickable" tabIndex={0} role="button" aria-label={`Lihat detail transaksi ${tx.description}`} onClick={() => setSelectedTransaction(tx)} onKeyDown={(event) => { if (event.target !== event.currentTarget) return; if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedTransaction(tx); } }}><td><div className="transaction-cell"><span className={`transaction-icon ${tx.type}`}><Icon name={tx.type === "income" ? "arrow-down" : tx.type === "expense" ? "arrow-up" : "swap"} size={16}/></span><span><span className={`transaction-kicker ${tx.type}`}>{tx.type === "income" ? "Pemasukan" : tx.type === "expense" ? "Pengeluaran" : "Transfer"}</span><strong>{tx.description}</strong>{tx.note && <small>{tx.note}</small>}</span></div></td><td><span className="pill">{tx.category}</span></td><td>{wallet?.name ?? "-"}</td><td>{formatDate(tx.date, { day: "2-digit", month: "short", year: "numeric" })}</td><td className={`right money ${tx.type === "income" ? "positive-text" : tx.type === "expense" ? "negative-text" : "neutral"}`}>{tx.type === "income" ? "+" : tx.type === "expense" ? "-" : ""}{formatCurrency(tx.amount)}</td><td><div className="table-actions"><button type="button" onClick={(event) => { event.stopPropagation(); setEditingTransaction(tx); }}>Edit</button><button type="button" className="danger-link" onClick={(event) => { event.stopPropagation(); removeTransaction(tx.id); }}>Hapus</button></div></td></tr>; })}</tbody></table></div>
-        <div className="mobile-transactions grouped-feed">{groupedTransactions.map((group) => <section className="transaction-day" key={group.key}><div className="transaction-day-label"><span>{dayLabel(group.key, now)}</span><small>{group.items.length} transaksi</small></div>{group.items.map((tx) => { const wallet = walletById.get(tx.walletId); return <article className="transaction-row transaction-row-actions transaction-clickable-mobile" key={tx.id} tabIndex={0} role="button" aria-label={`Lihat detail transaksi ${tx.description}`} onClick={() => setSelectedTransaction(tx)} onKeyDown={(event) => { if (event.target !== event.currentTarget) return; if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setSelectedTransaction(tx); } }}><span className={`transaction-icon ${tx.type}`}><Icon name={tx.type === "income" ? "arrow-down" : tx.type === "expense" ? "arrow-up" : "swap"} size={17}/></span><span className="transaction-main"><span className={`transaction-kicker ${tx.type}`}>{tx.type === "income" ? "Pemasukan" : tx.type === "expense" ? "Pengeluaran" : "Transfer"}</span><strong>{tx.description}</strong><small className="transaction-mobile-meta"><span>{wallet?.name ?? "Wallet"}</span><i aria-hidden="true">•</i><span>{tx.category}</span></small></span><strong className={tx.type === "income" ? "money positive-text" : tx.type === "expense" ? "money negative-text" : "money neutral"}>{tx.type === "income" ? "+" : tx.type === "expense" ? "-" : ""}{formatCurrency(tx.amount, true)}</strong></article>; })}</section>)}</div>
-      </> : <div className="empty-panel"><Icon name="search"/><strong>Tidak ada transaksi yang cocok</strong><span>{activeFilterCount ? "Reset atau ubah filter untuk melihat lebih banyak transaksi." : "Catat transaksi pertama lewat tombol Tambah."}</span>{activeFilterCount > 0 && <button type="button" className="button ghost empty-action" onClick={clearFilters}>Reset filter</button>}</div>}
+      {transactions.length ? (
+        <TransactionReceiptDeck
+          transactions={transactions}
+          wallets={state.wallets}
+          onOpen={setSelectedTransaction}
+          onEdit={setEditingTransaction}
+          onDelete={(transaction) => removeTransaction(transaction.id)}
+        />
+      ) : <div className="empty-panel"><Icon name="search"/><strong>Tidak ada transaksi yang cocok</strong><span>{activeFilterCount ? "Reset atau ubah filter untuk melihat lebih banyak transaksi." : "Catat transaksi pertama lewat tombol Tambah."}</span>{activeFilterCount > 0 && <button type="button" className="button ghost empty-action" onClick={clearFilters}>Reset filter</button>}</div>}
     </section>
 
     <section className="card card-compact"><div className="card-head"><div><h2>Target finansial</h2></div><button className="small-action" onClick={() => { setEditingGoal(null); setGoalOpen(true); }}><Icon name="plus" size={16}/>Tambah</button></div>{state.goals.length ? <div className="goal-grid">{state.goals.map((goal) => { const progress = Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100)); return <article className="goal-card" key={goal.id}><div className="row-between"><span className="pill">{goal.status}</span><strong>{progress}%</strong></div><h3>{goal.name}</h3><p>{formatCurrency(goal.currentAmount, true)} dari {formatCurrency(goal.targetAmount, true)}</p><div className="progress"><span style={{ width: `${progress}%` }}/></div>{goal.targetDate && <small>Target {formatDate(goal.targetDate, { day: "2-digit", month: "short", year: "numeric" })}</small>}<div className="entity-actions"><button type="button" onClick={() => { setEditingGoal(goal); setGoalOpen(true); }}>Edit</button>{goal.status !== "completed" && <button type="button" onClick={() => updateGoal(goal.id, { status: goal.status === "paused" ? "active" : "paused" })}>{goal.status === "paused" ? "Lanjutkan" : "Pause"}</button>}<button type="button" onClick={() => updateGoal(goal.id, { status: "completed", currentAmount: goal.targetAmount })}>Selesai</button><button type="button" className="danger-link" onClick={() => removeGoal(goal.id)}>Hapus</button></div></article>; })}</div> : <div className="empty-panel"><Icon name="target"/><strong>Belum ada target finansial</strong><span>Buat target untuk memantau progress tabungan atau tujuan keuangan.</span></div>}</section>

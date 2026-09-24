@@ -63,8 +63,8 @@ test("production UX keeps quick entry progressive and finance analytics switchab
   assert.match(finance, /3 Bulan/);
   assert.match(finance, /6 Bulan/);
   assert.match(finance, /1 Tahun/);
-  assert.match(finance, /groupedTransactions/);
-  assert.match(finance, /Hari ini/);
+  assert.match(finance, /TransactionReceiptDeck/);
+  assert.match(finance, /Riwayat transaksi/);
   assert.match(finance, /filter-disclosure/);
 });
 
@@ -97,7 +97,7 @@ test("impact UI pass preserves the Impeccable hierarchy and unified surface syst
   assert.match(dashboard, /card-primary hero-card/);
   assert.match(dashboard, /hero-primary-action/);
   assert.match(finance, /card-secondary analytics-card/);
-  assert.match(finance, /transaction-cell/);
+  assert.match(finance, /TransactionReceiptDeck/);
   for (const token of ["card-primary", "card-secondary", "card-compact"]) assert.match(css, new RegExp(token));
 });
 
@@ -162,20 +162,23 @@ test("modal escapes page stacking contexts through a body portal", async () => {
 });
 
 
-test("transaction history opens an accessible receipt-style detail modal", async () => {
+test("transaction history uses an accessible stacked receipt deck and preserves the detail modal", async () => {
   const finance = await read("src/modules/finance/components/finance-page.tsx");
+  const deck = await read("src/modules/finance/components/transaction-receipt-deck.tsx");
   const css = await read("src/app/globals.css");
-  assert.match(finance, /selectedTransaction/);
-  assert.match(finance, /transaction-clickable/);
-  assert.match(finance, /transaction-clickable-mobile/);
-  assert.match(finance, /aria-label={`Lihat detail transaksi/);
+  const nativeCss = await read("src/app/native.css");
+  assert.match(finance, /TransactionReceiptDeck/);
+  assert.match(finance, /onOpen={setSelectedTransaction}/);
+  assert.match(deck, /aria-roledescription="carousel"/);
+  assert.match(deck, /receipt-card-total/);
+  assert.match(deck, /shortReference/);
+  assert.match(deck, /ID transaksi/);
   assert.match(finance, /transaction-receipt/);
   assert.match(finance, /Reference ID/);
   assert.match(finance, /formatTime\(selectedTransaction\.date\)/);
-  assert.match(finance, /event\.stopPropagation\(\)/);
   assert.match(css, /\.transaction-receipt/);
-  assert.match(css, /\.receipt-divider/);
-  assert.match(css, /\.receipt-details/);
+  assert.match(nativeCss, /Transaction receipt stacked swipe deck/);
+  assert.match(nativeCss, /\.receipt-deck-card/);
 });
 
 
@@ -353,29 +356,32 @@ test("small-screen navigation does not trigger browser auto-zoom", async () => {
 });
 
 
-test("finance ledger switches to a compact mobile feed at the same breakpoint as bottom navigation", async () => {
+test("finance ledger uses the same receipt deck on desktop and mobile while keeping filters and destructive flow", async () => {
   const finance = await read("src/modules/finance/components/finance-page.tsx");
-  const css = await read("src/app/globals.css");
-  assert.match(css, /@media \(max-width: 900px\)[\s\S]*?\.ledger-card \.table-wrap \{ display: none; \}/);
-  assert.match(css, /@media \(max-width: 900px\)[\s\S]*?\.ledger-card \.mobile-transactions \{ display: block; \}/);
-  assert.match(css, /\.ledger-card \.transaction-row[\s\S]*?min-height:\s*54px/);
-  assert.doesNotMatch(finance, /mobile-row-actions/);
-  assert.match(finance, /removeTransaction\(id\)/);
-  assert.match(finance, />Hapus<\/button>/);
+  const deck = await read("src/modules/finance/components/transaction-receipt-deck.tsx");
+  assert.match(finance, /Riwayat transaksi/);
+  assert.match(finance, /TransactionReceiptDeck/);
+  assert.doesNotMatch(finance, /mobile-transactions/);
+  assert.doesNotMatch(finance, /<table className="data-table"/);
+  assert.match(finance, /filter-disclosure/);
+  assert.match(finance, /removeTransaction\(transaction\.id\)/);
+  assert.match(deck, />Hapus<\/button>/);
 });
 
 
-test("mobile ledger uses a native activity-feed hierarchy instead of dense table chrome", async () => {
-  const finance = await read("src/modules/finance/components/finance-page.tsx");
-  const css = await read("src/app/globals.css");
-  assert.match(finance, /transaction-mobile-meta/);
-  assert.match(finance, /transaksi\{transactions\.length !== state\.transactions\.length/);
-  assert.match(css, /Native-style mobile ledger polish/);
-  assert.match(css, /\.ledger-card \.type-filter-row[\s\S]*?overflow-x:\s*auto/);
-  assert.match(css, /\.ledger-card \.transaction-day-label[\s\S]*?position:\s*static/);
-  assert.match(css, /\.ledger-card \.transaction-row[\s\S]*?min-height:\s*50px/);
-  assert.match(css, /\.ledger-card \.transaction-mobile-meta/);
-  assert.match(css, /@media \(max-width: 520px\)[\s\S]*?min-height:\s*48px/);
+test("receipt deck mirrors a bill hierarchy and stays compact on narrow screens", async () => {
+  const deck = await read("src/modules/finance/components/transaction-receipt-deck.tsx");
+  const css = await read("src/app/native.css");
+  assert.match(deck, /receipt-card-header/);
+  assert.match(deck, /receipt-card-details/);
+  assert.match(deck, /Tanggal/);
+  assert.match(deck, /Dompet/);
+  assert.match(deck, /Kategori/);
+  assert.match(deck, /ID transaksi/);
+  assert.match(deck, /receipt-card-total/);
+  assert.match(css, /\.receipt-card-total/);
+  assert.match(css, /@media \(max-width: 680px\)[\s\S]*?\.receipt-deck-stage[\s\S]*?height:\s*474px/);
+  assert.match(css, /@media \(max-width: 390px\)[\s\S]*?\.receipt-deck-stage/);
 });
 
 
@@ -392,4 +398,22 @@ test("wallet deck axis-locks touch gestures and throttles drag updates to preven
   assert.match(css, /touch-action:\s*pan-y pinch-zoom/);
   assert.match(css, /overscroll-behavior-x:\s*contain/);
   assert.doesNotMatch(css, /perspective:\s*1000px/);
+});
+
+
+test("transaction receipt deck is bidirectional, velocity-aware, axis-locked, and keyboard accessible", async () => {
+  const deck = await read("src/modules/finance/components/transaction-receipt-deck.tsx");
+  const css = await read("src/app/native.css");
+  assert.match(deck, /GestureAxis/);
+  assert.match(deck, /AXIS_LOCK_PX/);
+  assert.match(deck, /absoluteY > absoluteX \* AXIS_DOMINANCE/);
+  assert.match(deck, /Math\.abs\(gesture\.velocity\) > 0\.48/);
+  assert.match(deck, /window\.requestAnimationFrame/);
+  assert.match(deck, /setPointerCapture/);
+  assert.match(deck, /ArrowRight/);
+  assert.match(deck, /ArrowLeft/);
+  assert.match(deck, /roleFor/);
+  assert.match(css, /touch-action:\s*pan-y pinch-zoom/);
+  assert.match(css, /cubic-bezier\(\.2, \.92, \.24, 1\)/);
+  assert.match(css, /prefers-reduced-motion/);
 });
