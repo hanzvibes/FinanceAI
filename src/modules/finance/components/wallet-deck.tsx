@@ -8,6 +8,7 @@ import { hapticTick } from "@/shared/utils/haptics";
 
 type WalletWithBalance = Wallet & { balance: number };
 type CardRole = "current" | "next" | "next2" | "prev" | "neighbor";
+type GestureAxis = "pending" | "horizontal" | "vertical";
 
 type WalletDeckProps = {
   wallets: WalletWithBalance[];
@@ -18,6 +19,8 @@ type WalletDeckProps = {
 
 const SETTLE_MS = 320;
 const DRAG_REFERENCE = 360;
+const AXIS_LOCK_PX = 7;
+const AXIS_DOMINANCE = 1.15;
 
 function walletCardDigits(id: string) {
   let value = 0;
@@ -35,16 +38,28 @@ export function WalletDeck({ wallets, typeLabels, onEdit, onToggleArchive }: Wal
   const [dragging, setDragging] = useState(false);
   const [settling, setSettling] = useState(false);
   const timerRef = useRef<number | null>(null);
-  const gestureRef = useRef({ startX: 0, lastX: 0, lastTime: 0, velocity: 0, deltaX: 0, width: DRAG_REFERENCE, pointerId: -1 });
+  const frameRef = useRef<number | null>(null);
+  const pendingDragXRef = useRef(0);
+  const gestureRef = useRef({
+    startX: 0,
+    startY: 0,
+    lastX: 0,
+    lastTime: 0,
+    velocity: 0,
+    deltaX: 0,
+    width: DRAG_REFERENCE,
+    pointerId: -1,
+    axis: "pending" as GestureAxis,
+  });
 
   const count = wallets.length;
   const foundIndex = wallets.findIndex((wallet) => wallet.id === activeId);
   const activeIndex = foundIndex >= 0 ? foundIndex : 0;
   const activeWallet = wallets[activeIndex];
 
-
   useEffect(() => () => {
     if (timerRef.current !== null) window.clearTimeout(timerRef.current);
+    if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
   }, []);
 
   function clearTimer() {
@@ -54,6 +69,21 @@ export function WalletDeck({ wallets, typeLabels, onEdit, onToggleArchive }: Wal
     }
   }
 
+  function clearDragFrame() {
+    if (frameRef.current !== null) {
+      window.cancelAnimationFrame(frameRef.current);
+      frameRef.current = null;
+    }
+  }
+
+  function scheduleDragX(value: number) {
+    pendingDragXRef.current = value;
+    if (frameRef.current !== null) return;
+    frameRef.current = window.requestAnimationFrame(() => {
+      frameRef.current = null;
+      setDragX(pendingDragXRef.current);
+    });
+  }
 
   function finishTransition(callback?: () => void) {
     clearTimer();
@@ -69,6 +99,8 @@ export function WalletDeck({ wallets, typeLabels, onEdit, onToggleArchive }: Wal
 
   function move(direction: 1 | -1) {
     if (count < 2 || settling) return;
+    clearDragFrame();
+    setDragging(false);
     setSettling(true);
     setDragX(direction === 1 ? -DRAG_REFERENCE * 1.45 : DRAG_REFERENCE * 1.45);
     hapticTick();
@@ -79,6 +111,8 @@ export function WalletDeck({ wallets, typeLabels, onEdit, onToggleArchive }: Wal
   }
 
   function snapBack() {
+    clearDragFrame();
+    setDragging(false);
     setSettling(true);
     setDragX(0);
     finishTransition();
@@ -87,46 +121,94 @@ export function WalletDeck({ wallets, typeLabels, onEdit, onToggleArchive }: Wal
   function startGesture(event: ReactPointerEvent<HTMLDivElement>) {
     if (count < 2 || settling) return;
     if (event.pointerType === "mouse" && event.button !== 0) return;
+
     clearTimer();
+    clearDragFrame();
+
     const width = event.currentTarget.getBoundingClientRect().width || DRAG_REFERENCE;
+    const mouseGesture = event.pointerType === "mouse";
     gestureRef.current = {
       startX: event.clientX,
+      startY: event.clientY,
       lastX: event.clientX,
       lastTime: event.timeStamp,
       velocity: 0,
       deltaX: 0,
       width,
       pointerId: event.pointerId,
+      axis: mouseGesture ? "horizontal" : "pending",
     };
-    setDragging(true);
-    event.currentTarget.setPointerCapture(event.pointerId);
-    event.currentTarget.focus({ preventScroll: true });
+
+    if (mouseGesture) {
+      setDragging(true);
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
   }
 
   function moveGesture(event: ReactPointerEvent<HTMLDivElement>) {
-    if (!dragging || gestureRef.current.pointerId !== event.pointerId) return;
-    const elapsed = Math.max(1, event.timeStamp - gestureRef.current.lastTime);
-    const velocity = (event.clientX - gestureRef.current.lastX) / elapsed;
-    gestureRef.current.lastX = event.clientX;
-    gestureRef.current.lastTime = event.timeStamp;
-    gestureRef.current.velocity = velocity;
+    const gesture = gestureRef.current;
+    if (gesture.pointerId !== event.pointerId || gesture.axis === "vertical") return;
 
-    const width = gestureRef.current.width;
-    const delta = event.clientX - gestureRef.current.startX;
-    const absoluteDelta = Math.abs(delta);
-    const resistanceStart = width * 0.82;
-    const resisted = absoluteDelta <= resistanceStart
-      ? absoluteDelta
-      : resistanceStart + (absoluteDelta - resistanceStart) * 0.22;
-    const limited = Math.sign(delta) * Math.min(width * 0.96, resisted);
-    gestureRef.current.deltaX = limited;
-    setDragX(limited);
+    const deltaX = event.clientX - gesture.startX;
+    const deltaY = event.clientY - gesture.startY;
+    const absoluteX = Math.abs(deltaX);
+    const absoluteY = Math.abs(deltaY);
+
+    if (gesture.axis === "pending") {
+      if (Math.max(absoluteX, absoluteY) < AXIS_LOCK_PX) return;
+
+      if (absoluteY > absoluteX * AXIS_DOMINANCE) {
+        gesture.axis = "vertical";
+        gesture.pointerId = -1;
+        setDragging(false);
+        return;
+      }
+
+      if (absoluteX < absoluteY * AXIS_DOMINANCE) return;
+
+      gesture.axis = "horizontal";
+      gesture.lastX = event.clientX;
+      gesture.lastTime = event.timeStamp;
+      gesture.velocity = 0;
+      setDragging(true);
+      event.currentTarget.setPointerCapture(event.pointerId);
+    }
+
+    event.preventDefault();
+
+    const elapsed = Math.max(1, event.timeStamp - gesture.lastTime);
+    const velocity = (event.clientX - gesture.lastX) / elapsed;
+    gesture.lastX = event.clientX;
+    gesture.lastTime = event.timeStamp;
+    gesture.velocity = velocity;
+
+    const resistanceStart = gesture.width * 0.82;
+    const resisted = absoluteX <= resistanceStart
+      ? absoluteX
+      : resistanceStart + (absoluteX - resistanceStart) * 0.22;
+    const limited = Math.sign(deltaX) * Math.min(gesture.width * 0.96, resisted);
+
+    gesture.deltaX = limited;
+    scheduleDragX(limited);
   }
 
   function endGesture(event: ReactPointerEvent<HTMLDivElement>, cancelled = false) {
-    if (!dragging || gestureRef.current.pointerId !== event.pointerId) return;
+    const gesture = gestureRef.current;
+    if (gesture.pointerId !== event.pointerId) return;
+
+    const wasHorizontal = gesture.axis === "horizontal";
+    gesture.pointerId = -1;
+
+    if (!wasHorizontal) {
+      clearDragFrame();
+      setDragging(false);
+      return;
+    }
+
     try {
-      event.currentTarget.releasePointerCapture(event.pointerId);
+      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+        event.currentTarget.releasePointerCapture(event.pointerId);
+      }
     } catch {
       // Pointer capture may already be released by the browser.
     }
@@ -136,10 +218,9 @@ export function WalletDeck({ wallets, typeLabels, onEdit, onToggleArchive }: Wal
       return;
     }
 
-    const width = gestureRef.current.width;
-    const velocity = gestureRef.current.velocity;
-    const releaseX = gestureRef.current.deltaX;
-    const shouldCommit = Math.abs(releaseX) >= Math.min(88, width * 0.18) || Math.abs(velocity) > 0.48;
+    const velocity = gesture.velocity;
+    const releaseX = gesture.deltaX;
+    const shouldCommit = Math.abs(releaseX) >= Math.min(88, gesture.width * 0.18) || Math.abs(velocity) > 0.48;
     if (!shouldCommit || releaseX === 0) {
       snapBack();
       return;

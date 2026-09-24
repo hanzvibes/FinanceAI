@@ -377,3 +377,19 @@ test("mobile ledger uses a native activity-feed hierarchy instead of dense table
   assert.match(css, /\.ledger-card \.transaction-mobile-meta/);
   assert.match(css, /@media \(max-width: 520px\)[\s\S]*?min-height:\s*48px/);
 });
+
+
+test("wallet deck axis-locks touch gestures and throttles drag updates to prevent page flicker", async () => {
+  const deck = await read("src/modules/finance/components/wallet-deck.tsx");
+  const css = await read("src/app/native.css");
+  assert.match(deck, /startY/);
+  assert.match(deck, /GestureAxis/);
+  assert.match(deck, /AXIS_LOCK_PX/);
+  assert.match(deck, /absoluteY > absoluteX \* AXIS_DOMINANCE/);
+  assert.match(deck, /window\.requestAnimationFrame/);
+  assert.match(deck, /setPointerCapture/);
+  assert.doesNotMatch(deck, /\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(css, /touch-action:\s*pan-y pinch-zoom/);
+  assert.match(css, /overscroll-behavior-x:\s*contain/);
+  assert.doesNotMatch(css, /perspective:\s*1000px/);
+});
