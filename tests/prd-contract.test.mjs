@@ -181,3 +181,24 @@ test("transaction history opens an accessible receipt-style detail modal", async
   assert.match(css, /\.receipt-divider/);
   assert.match(css, /\.receipt-details/);
 });
+
+
+test("light UI uses a pure white canvas and removes decorative kicker text", async () => {
+  const css = await read("src/app/globals.css");
+  assert.match(css, /--canvas:\s*#ffffff/);
+  assert.match(css, /--surface:\s*#ffffff/);
+  assert.match(css, /background:\s*rgba\(255, 255, 255, \.94\)/);
+  const files = [
+    "src/modules/dashboard/components/dashboard-page.tsx",
+    "src/modules/finance/components/finance-page.tsx",
+    "src/modules/calendar/components/calendar-page.tsx",
+    "src/modules/personal/components/personal-page.tsx",
+    "src/shared/components/ui/modal.tsx",
+  ];
+  for (const file of files) {
+    const source = await read(file);
+    assert.doesNotMatch(source, /className="eyebrow"/);
+    assert.doesNotMatch(source, /className="card-label"/);
+    assert.doesNotMatch(source, /className="modal-kicker"/);
+  }
+});

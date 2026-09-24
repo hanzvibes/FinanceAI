@@ -35,7 +35,7 @@ export function DashboardPage() {
   return <div className="page-stack dashboard-page">
     <section className="page-heading dashboard-heading">
       <div>
-        <span className="eyebrow">{formatDate(now.toISOString(), { weekday: "long", day: "numeric", month: "long" })}</span>
+        
         <h1>{greeting}.</h1>
         <p>Satu pandangan untuk kondisi uang hari ini. Detail lain tetap dekat, tetapi tidak berebut perhatian.</p>
       </div>
@@ -45,7 +45,7 @@ export function DashboardPage() {
       <article className="card card-primary hero-card span-4">
         <div className="hero-top">
           <div>
-            <span className="card-label">Kekayaan bersih</span>
+            
             <strong className="hero-number amount-display">{formatCurrency(summary.netWorth)}</strong>
             <span className="hero-caption">Akumulasi seluruh wallet aktif</span>
           </div>
@@ -68,17 +68,17 @@ export function DashboardPage() {
       </article>
 
       <article className="card card-secondary span-2 dashboard-wallet-card">
-        <div className="card-head"><div><span className="card-label">Accounts</span><h2>Wallet aktif</h2><p className="section-helper">Saldo yang paling relevan untuk keputusan hari ini.</p></div><Link href="/finance" className="text-link">Kelola wallet</Link></div>
+        <div className="card-head"><div><h2>Wallet aktif</h2><p className="section-helper">Saldo yang paling relevan untuk keputusan hari ini.</p></div><Link href="/finance" className="text-link">Kelola wallet</Link></div>
         {wallets.length ? <div className="wallet-strip">{wallets.slice(0, 4).map((wallet) => <div className="wallet-chip" key={wallet.id}><span className="wallet-dot" style={{ background: wallet.accent }}/><span><small>{wallet.name}</small><strong>{formatCurrency(wallet.balance, true)}</strong></span></div>)}</div> : <div className="empty-compact state-inline"><Icon name="wallet" size={18}/><span>Tambahkan wallet pertama untuk mulai mencatat.</span><Link href="/finance" className="text-link">Buka Finance</Link></div>}
       </article>
 
       <article className="card card-secondary span-2 dashboard-activity-card">
-        <div className="card-head"><div><span className="card-label">Aktivitas</span><h2>Transaksi terbaru</h2><p className="section-helper">Lima perubahan terakhir pada ledger.</p></div><Link href="/finance" className="text-link">Semua transaksi</Link></div>
+        <div className="card-head"><div><h2>Transaksi terbaru</h2><p className="section-helper">Lima perubahan terakhir pada ledger.</p></div><Link href="/finance" className="text-link">Semua transaksi</Link></div>
         {recent.length ? <div className="transaction-list">{recent.map((tx) => <div className="transaction-row" key={tx.id}><span className={`transaction-icon ${tx.type}`}><Icon name={tx.type === "income" ? "arrow-down" : tx.type === "expense" ? "arrow-up" : "swap"} size={17}/></span><span className="transaction-main"><span className={`transaction-kicker ${tx.type}`}>{tx.type === "income" ? "Pemasukan" : tx.type === "expense" ? "Pengeluaran" : "Transfer"}</span><strong>{tx.description}</strong><small>{walletNames.get(tx.walletId) ?? "Wallet"} · {formatDate(tx.date, { day: "2-digit", month: "short" })}</small></span><strong className={tx.type === "income" ? "money positive-text" : tx.type === "expense" ? "money negative-text" : "money neutral"}>{tx.type === "income" ? "+" : tx.type === "expense" ? "-" : ""}{formatCurrency(tx.amount)}</strong></div>)}</div> : <div className="empty-compact state-inline"><Icon name="swap" size={18}/><span>Belum ada transaksi. Tambahkan transaksi pertama dari tombol Tambah.</span></div>}
       </article>
 
       <article className="card card-compact span-2">
-        <div className="card-head"><div><span className="card-label">Financial goals</span><h2>Target aktif</h2></div><Link href="/finance" className="text-link">Lihat semua</Link></div>
+        <div className="card-head"><div><h2>Target aktif</h2></div><Link href="/finance" className="text-link">Lihat semua</Link></div>
         {activeGoals.length ? <div className="goal-list">{activeGoals.map((goal) => {
           const progress = Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100));
           return <div className="goal-row" key={goal.id}>
@@ -90,7 +90,7 @@ export function DashboardPage() {
       </article>
 
       <article className="card card-compact span-2">
-        <div className="card-head"><div><span className="card-label">Agenda berikutnya</span><h2>Yang perlu dilakukan</h2></div><Link href="/calendar" className="text-link">Kalender</Link></div>
+        <div className="card-head"><div><h2>Yang perlu dilakukan</h2></div><Link href="/calendar" className="text-link">Kalender</Link></div>
         {agenda.length ? <div className="agenda-compact">{agenda.map((item) => <div className="agenda-mini" key={item.id}><span className="agenda-time">{formatTime(item.startAt)}</span><span><strong>{item.title}</strong><small>{item.category}</small></span></div>)}</div> : <div className="empty-compact state-inline"><Icon name="calendar" size={18}/><span>Tidak ada agenda yang menunggu.</span></div>}
       </article>
     </section>

@@ -84,7 +84,7 @@ export function Modal({ open, title, children, onClose, description }: ModalProp
         <span className="sheet-handle" aria-hidden="true" />
         <div className="modal-head">
           <div>
-            <span className="modal-kicker">FinanceAI</span>
+            
             <h2 id={titleId}>{title}</h2>
             {description ? <p id={descriptionId}>{description}</p> : null}
           </div>
