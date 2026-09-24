@@ -200,28 +200,39 @@ test("light UI uses a pure white canvas and removes decorative kicker text", asy
 });
 
 
-test("wallet cards use a physical-card visual without pretending to be a real payment card", async () => {
+test("wallet cards keep the physical-card visual inside the swipe deck", async () => {
   const finance = await read("src/modules/finance/components/finance-page.tsx");
+  const deck = await read("src/modules/finance/components/wallet-deck.tsx");
   const css = await read("src/app/globals.css");
-  assert.match(finance, /wallet-credit-surface/);
-  assert.match(finance, /wallet-chip-visual/);
-  assert.match(finance, /wallet-credit-number/);
-  assert.match(finance, /walletCardDigits/);
-  assert.match(finance, />FinanceAI</);
-  assert.doesNotMatch(finance, /VISA|Mastercard|MasterCard/);
+  assert.match(finance, /WalletDeck/);
+  assert.match(deck, /wallet-credit-surface/);
+  assert.match(deck, /wallet-chip-visual/);
+  assert.match(deck, /wallet-credit-number/);
+  assert.match(deck, /walletCardDigits/);
+  assert.match(deck, />FinanceAI</);
+  assert.doesNotMatch(deck, /VISA|Mastercard|MasterCard/);
   assert.match(css, /aspect-ratio:\s*1\.586\s*\/\s*1/);
   assert.match(css, /\.wallet-credit-surface/);
-  assert.match(css, /\.wallet-card-actions/);
 });
 
 
 
-test("wallet cards use the compact responsive footprint", async () => {
-  const css = await read("src/app/globals.css");
-  assert.match(css, /grid-template-columns:\s*repeat\(auto-fit, minmax\(min\(100%, 250px\), 320px\)\)/);
-  assert.match(css, /\.wallet-card[\s\S]*?max-width:\s*320px/);
-  assert.match(css, /\.wallet-credit-surface[\s\S]*?max-width:\s*320px/);
-  assert.match(css, /@media \(max-width: 520px\)[\s\S]*?\.wallet-grid \{ grid-template-columns: 1fr; \}/);
+test("wallet deck is stacked, bidirectional, velocity-aware, and keyboard accessible", async () => {
+  const deck = await read("src/modules/finance/components/wallet-deck.tsx");
+  const css = await read("src/app/native.css");
+  assert.match(deck, /onPointerDown={startGesture}/);
+  assert.match(deck, /onPointerMove={moveGesture}/);
+  assert.match(deck, /onPointerUp=\{\(event\) => endGesture\(event\)\}/);
+  assert.match(deck, /Math\.abs\(velocity\) > 0\.48/);
+  assert.match(deck, /ArrowRight/);
+  assert.match(deck, /ArrowLeft/);
+  assert.match(deck, /aria-roledescription="carousel"/);
+  assert.match(deck, /neighbor/);
+  assert.match(css, /Wallet stacked swipe deck/);
+  assert.match(css, /\.wallet-deck-card/);
+  assert.match(css, /cubic-bezier\(\.2, \.92, \.24, 1\)/);
+  assert.match(css, /touch-action:\s*pan-y/);
+  assert.match(css, /prefers-reduced-motion/);
 });
 
 

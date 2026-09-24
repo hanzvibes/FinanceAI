@@ -3,6 +3,7 @@
 import { FormEvent, useMemo, useState } from "react";
 import { categorySpending, financeSummary, monthlyCashflow, walletBalance } from "@/modules/finance/calculations";
 import { CashflowChart } from "@/modules/finance/components/cashflow-chart";
+import { WalletDeck } from "@/modules/finance/components/wallet-deck";
 import { Icon } from "@/shared/components/ui/icon";
 import { Modal } from "@/shared/components/ui/modal";
 import { ConfirmSheet } from "@/shared/components/ui/confirm-sheet";
@@ -59,12 +60,6 @@ function dayLabel(key: string, today: Date) {
   if (key === todayKey) return "Hari ini";
   if (key === yesterdayKey) return "Kemarin";
   return formatDate(`${key}T12:00:00`, { weekday: "long", day: "numeric", month: "long" });
-}
-
-function walletCardDigits(id: string) {
-  let value = 0;
-  for (let index = 0; index < id.length; index += 1) value = (value * 31 + id.charCodeAt(index)) % 10000;
-  return String(value).padStart(4, "0");
 }
 
 export function FinancePage() {
@@ -222,26 +217,15 @@ export function FinancePage() {
     <section className="finance-grid">
       <article className="card card-secondary finance-wallets">
         <div className="card-head"><div><h2>Wallet</h2><p className="section-helper">Saldo dihitung dari saldo awal dan seluruh ledger.</p></div><button className="small-action" onClick={() => { setEditingWallet(null); setWalletType("bank"); setWalletOpen(true); }}><Icon name="plus" size={16}/>Tambah</button></div>
-        {wallets.length ? <div className="wallet-grid">{wallets.map((wallet) => <article className={`wallet-card ${wallet.archived ? "archived" : ""}`} key={wallet.id} style={{ "--wallet-accent": wallet.accent } as React.CSSProperties}>
-          <div className="wallet-credit-surface" aria-label={`${wallet.name}, saldo ${formatCurrency(wallet.balance)}`}>
-            <div className="wallet-credit-top">
-              <span className="wallet-card-brand"><strong>FinanceAI</strong><small>{walletTypeLabels[wallet.type]}</small></span>
-              <span className={`wallet-status ${wallet.archived ? "archived" : ""}`}>{wallet.archived ? "Diarsipkan" : "Aktif"}</span>
-            </div>
-            <div className="wallet-credit-tech" aria-hidden="true">
-              <span className="wallet-chip-visual"><i/><i/><i/><i/></span>
-              <span className="wallet-contactless"><i/><i/><i/></span>
-            </div>
-            <div className="wallet-credit-number" aria-label={`Nomor visual berakhir ${walletCardDigits(wallet.id)}`}>
-              <span>••••</span><span>••••</span><span>••••</span><strong>{walletCardDigits(wallet.id)}</strong>
-            </div>
-            <div className="wallet-credit-bottom">
-              <span className="wallet-credit-owner"><small>Wallet</small><strong>{wallet.name}</strong></span>
-              <span className="wallet-credit-balance"><small>Saldo</small><strong>{formatCurrency(wallet.balance)}</strong></span>
-            </div>
-          </div>
-          <div className="entity-actions wallet-card-actions"><button type="button" aria-label={`Edit wallet ${wallet.name}`} onClick={() => { setEditingWallet(wallet); setWalletType(wallet.type); setWalletOpen(true); }}>Edit</button><button type="button" onClick={() => { const result = archiveWallet(wallet.id, !wallet.archived); flash(result.message ?? (wallet.archived ? "Wallet diaktifkan kembali." : "Wallet diarsipkan.")); }}>{wallet.archived ? "Aktifkan" : "Arsipkan"}</button></div>
-        </article>)}</div> : <div className="empty-panel"><Icon name="wallet"/><strong>Belum ada wallet</strong><span>Tambahkan tempat uangmu disimpan untuk mulai membangun ledger.</span></div>}
+        {wallets.length ? <WalletDeck
+          wallets={wallets}
+          typeLabels={walletTypeLabels}
+          onEdit={(wallet) => { setEditingWallet(wallet); setWalletType(wallet.type); setWalletOpen(true); }}
+          onToggleArchive={(wallet) => {
+            const result = archiveWallet(wallet.id, !wallet.archived);
+            flash(result.message ?? (wallet.archived ? "Wallet diaktifkan kembali." : "Wallet diarsipkan."));
+          }}
+        /> : <div className="empty-panel"><Icon name="wallet"/><strong>Belum ada wallet</strong><span>Tambahkan tempat uangmu disimpan untuk mulai membangun ledger.</span></div>}
       </article>
       <article className="card card-compact allocation-card">
         <div className="card-head"><div><h2>Komposisi wallet</h2><p className="section-helper">Porsi saldo positif pada setiap wallet aktif.</p></div></div>
