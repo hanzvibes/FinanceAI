@@ -1543,7 +1543,7 @@ html, body, .sidebar, .topbar, .card, .stat-card, .global-search, .bottom-nav,
 
 :root[data-theme="dark"] .hero-primary-action .button { background: #dcece5; color: #14382f; }
 :root[data-theme="dark"] .empty-panel,
-:root[data-theme="dark"] .empty-inline,
+:root[data-theme="dark"] .empty-inline { background: var(--surface-subtle); }
 
 @media (prefers-reduced-motion: reduce) {
   .modal-backdrop,
