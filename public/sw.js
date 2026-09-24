@@ -1,5 +1,5 @@
-const CACHE = "financeai-shell-v4";
-const RUNTIME = "financeai-runtime-v4";
+const CACHE = "financeai-shell-v5";
+const RUNTIME = "financeai-runtime-v5";
 const APP_SHELL = ["/", "/finance", "/calendar", "/personal", "/manifest.webmanifest", "/offline.html", "/icons/icon-192.png", "/icons/icon-512.png"];
 
 self.addEventListener("install", (event) => {

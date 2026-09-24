@@ -5,6 +5,7 @@ import { categorySpending, financeSummary, monthlyCashflow, walletBalance } from
 import { CashflowChart } from "@/modules/finance/components/cashflow-chart";
 import { Icon } from "@/shared/components/ui/icon";
 import { Modal } from "@/shared/components/ui/modal";
+import { ConfirmSheet } from "@/shared/components/ui/confirm-sheet";
 import { useFinance } from "@/shared/providers/finance-provider";
 import type { FinancialGoal, Transaction, TransactionType, Wallet, WalletType } from "@/shared/types/domain";
 import { formatCurrency, formatDate, formatTime } from "@/shared/utils/format";
@@ -74,6 +75,7 @@ export function FinancePage() {
   const [editingGoal, setEditingGoal] = useState<FinancialGoal | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
+  const [pendingDelete, setPendingDelete] = useState<{ kind: "transaction" | "goal"; id: string } | null>(null);
   const [chartMonths, setChartMonths] = useState<3 | 6 | 12>(6);
   const [query, setQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
@@ -172,11 +174,18 @@ export function FinancePage() {
     flash("Transaksi diperbarui.");
   }
 
-  function removeTransaction(id: string) {
-    if (window.confirm("Hapus transaksi ini? Saldo dan ringkasan akan dihitung ulang.")) { deleteTransaction(id); flash("Transaksi dihapus."); }
-  }
-  function removeGoal(id: string) {
-    if (window.confirm("Hapus financial goal ini?")) { deleteGoal(id); flash("Goal dihapus."); }
+  function removeTransaction(id: string) { setPendingDelete({ kind: "transaction", id }); }
+  function removeGoal(id: string) { setPendingDelete({ kind: "goal", id }); }
+  function confirmDelete() {
+    if (!pendingDelete) return;
+    if (pendingDelete.kind === "transaction") {
+      deleteTransaction(pendingDelete.id);
+      flash("Transaksi dihapus.");
+    } else {
+      deleteGoal(pendingDelete.id);
+      flash("Goal dihapus.");
+    }
+    setPendingDelete(null);
   }
 
   return <div className="page-stack">
@@ -291,6 +300,14 @@ export function FinancePage() {
     </Modal>
 
     <Modal open={!!editingTransaction} onClose={() => setEditingTransaction(null)} title="Edit transaksi" description="Perubahan akan langsung dihitung ulang ke saldo dan ringkasan.">{editingTransaction && <form className="form-stack" onSubmit={submitTransaction}><div className="form-grid"><label className="field"><span>Tipe</span><select name="type" defaultValue={editingTransaction.type}><option value="expense">Expense</option><option value="income">Income</option><option value="transfer">Transfer</option></select></label><label className="field"><span>Nominal</span><input name="amount" type="number" inputMode="numeric" min="1" defaultValue={editingTransaction.amount} required/></label></div><div className="form-grid"><label className="field"><span>Wallet</span><select name="walletId" defaultValue={editingTransaction.walletId}>{state.wallets.map((wallet) => <option value={wallet.id} key={wallet.id}>{wallet.name}</option>)}</select></label><label className="field"><span>Wallet tujuan</span><select name="destinationWalletId" defaultValue={editingTransaction.destinationWalletId ?? ""}><option value="">Tidak ada</option>{state.wallets.map((wallet) => <option value={wallet.id} key={wallet.id}>{wallet.name}</option>)}</select></label></div><div className="form-grid"><label className="field"><span>Kategori</span><select name="category" defaultValue={editingTransaction.category}>{[...new Set([...expenseCategories, ...incomeCategories, editingTransaction.category])].map((category) => <option key={category}>{category}</option>)}</select></label><label className="field"><span>Tanggal & waktu</span><input name="date" type="datetime-local" defaultValue={datetimeLocal(editingTransaction.date)} required/></label></div><label className="field"><span>Deskripsi</span><input name="description" defaultValue={editingTransaction.description} required/></label><label className="field"><span>Catatan</span><textarea name="note" rows={3} defaultValue={editingTransaction.note ?? ""}/></label><div className="modal-actions sticky-actions"><button type="button" className="button ghost" onClick={() => setEditingTransaction(null)}>Batal</button><button className="button primary">Simpan perubahan</button></div></form>}</Modal>
+    <ConfirmSheet
+      open={!!pendingDelete}
+      onClose={() => setPendingDelete(null)}
+      onConfirm={confirmDelete}
+      title={pendingDelete?.kind === "goal" ? "Hapus target finansial?" : "Hapus transaksi?"}
+      message={pendingDelete?.kind === "goal" ? "Target ini akan dihapus dari FinanceAI." : "Saldo dan ringkasan akan langsung dihitung ulang setelah transaksi dihapus."}
+      confirmLabel="Hapus"
+    />
     {message && <div className="toast" role="status">{message}</div>}
   </div>;
 }

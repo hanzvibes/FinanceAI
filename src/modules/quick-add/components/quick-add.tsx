@@ -4,6 +4,7 @@ import { FormEvent, useMemo, useState } from "react";
 import { Modal } from "@/shared/components/ui/modal";
 import { Icon } from "@/shared/components/ui/icon";
 import { useFinance } from "@/shared/providers/finance-provider";
+import { hapticSuccess, hapticTick, hapticWarning } from "@/shared/utils/haptics";
 import type { TransactionType } from "@/shared/types/domain";
 
 const expenseCategories = ["Makanan", "Transportasi", "Belanja", "Tagihan", "Rumah", "Hiburan", "Kesehatan", "Pendidikan", "Langganan", "Lainnya"];
@@ -29,6 +30,7 @@ export function QuickAdd({ compact = false, floating = false }: { compact?: bool
   const { state, addTransaction, addAgenda, addGoal, addNote } = useFinance();
   const [open, setOpen] = useState(false);
   const [type, setType] = useState<QuickType>("expense");
+  const [category, setCategory] = useState("Makanan");
   const [defaultDateTime] = useState(localDatetimeNow);
   const [message, setMessage] = useState("");
   const [savedMessage, setSavedMessage] = useState("");
@@ -38,6 +40,7 @@ export function QuickAdd({ compact = false, floating = false }: { compact?: bool
   function finish(messageText: string) {
     setMessage("");
     setOpen(false);
+    hapticSuccess();
     setSavedMessage(messageText);
     window.setTimeout(() => setSavedMessage(""), 2600);
   }
@@ -65,7 +68,7 @@ export function QuickAdd({ compact = false, floating = false }: { compact?: bool
     const amount = Number(form.get("amount"));
     const walletId = String(form.get("walletId") || firstWallet);
     const destinationWalletId = String(form.get("destinationWalletId") || "") || undefined;
-    if (!amount || !walletId) { setMessage("Nominal dan wallet wajib diisi."); return; }
+    if (!amount || !walletId) { hapticWarning(); setMessage("Nominal dan wallet wajib diisi."); return; }
     const result = addTransaction({
       type,
       amount,
@@ -76,7 +79,7 @@ export function QuickAdd({ compact = false, floating = false }: { compact?: bool
       note: String(form.get("note") || "") || undefined,
       date: new Date(String(form.get("date") || new Date().toISOString())).toISOString(),
     });
-    if (!result.ok) { setMessage(result.message ?? "Transaksi tidak valid."); return; }
+    if (!result.ok) { hapticWarning(); setMessage(result.message ?? "Transaksi tidak valid."); return; }
     finish(type === "income" ? "Pemasukan tercatat." : type === "expense" ? "Pengeluaran tercatat." : "Transfer tercatat.");
   }
 
@@ -84,12 +87,12 @@ export function QuickAdd({ compact = false, floating = false }: { compact?: bool
   const isTransaction = type === "expense" || type === "income" || type === "transfer";
 
   return <>
-    <button className={triggerClass} onClick={() => setOpen(true)} aria-label="Tambah data"><Icon name="plus" size={18}/>{!floating && <span>Tambah</span>}</button>
+    <button className={triggerClass} onClick={() => { hapticTick(); setOpen(true); }} aria-label="Tambah data"><Icon name="plus" size={18}/>{!floating && <span>Tambah</span>}</button>
     <Modal open={open} onClose={() => { setOpen(false); setMessage(""); }} title="Tambah cepat" description="Pilih jenis data, isi hal penting dulu, lalu simpan. Detail tambahan tetap opsional.">
       <form className="form-stack quick-add-form" onSubmit={submit}>
         <div className="quick-type-grid" role="group" aria-label="Jenis data yang ditambahkan">
           {(["expense", "income", "transfer", "agenda", "goal", "note"] as QuickType[]).map((value) => (
-            <button type="button" key={value} className={type === value ? "quick-type active" : "quick-type"} onClick={() => { setType(value); setMessage(""); }} aria-pressed={type === value}>{labels[value]}</button>
+            <button type="button" key={value} className={type === value ? "quick-type active" : "quick-type"} onClick={() => { hapticTick(); setType(value); setCategory(value === "income" ? "Gaji" : value === "expense" ? "Makanan" : "Transfer"); setMessage(""); }} aria-pressed={type === value}>{labels[value]}</button>
           ))}
         </div>
 
@@ -101,7 +104,7 @@ export function QuickAdd({ compact = false, floating = false }: { compact?: bool
             {type === "transfer" ? (
               <label className="field"><span>Wallet tujuan</span><select name="destinationWalletId" defaultValue="" required><option value="" disabled>Pilih wallet berbeda</option>{wallets.map((wallet) => <option value={wallet.id} key={wallet.id}>{wallet.name}</option>)}</select></label>
             ) : (
-              <label className="field"><span>Kategori</span><select name="category" defaultValue={type === "income" ? "Gaji" : "Makanan"}>{(type === "income" ? incomeCategories : expenseCategories).map((item) => <option key={item}>{item}</option>)}</select></label>
+              <div className="field native-choice-field"><span>Kategori</span><input type="hidden" name="category" value={category}/><div className="native-chip-scroller" role="radiogroup" aria-label="Kategori transaksi">{(type === "income" ? incomeCategories : expenseCategories).map((item) => <button type="button" key={item} role="radio" aria-checked={category === item} className={category === item ? "native-choice-chip active" : "native-choice-chip"} onClick={() => { hapticTick(); setCategory(item); }}>{item}</button>)}</div></div>
             )}
           </div>
           <details className="form-details">

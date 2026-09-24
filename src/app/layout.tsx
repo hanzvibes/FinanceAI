@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
+import "./native.css";
 import { FinanceProvider } from "@/shared/providers/finance-provider";
 import { PwaRegister } from "@/infrastructure/pwa/pwa-register";
 import { env } from "@/config/env";
@@ -21,7 +22,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   viewportFit: "cover",
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#f4f5f1" },
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
     { media: "(prefers-color-scheme: dark)", color: "#0d1210" },
   ],
 };
@@ -34,6 +35,8 @@ const themeScript = `
     const theme = stored === "dark" || stored === "light" ? stored : preferred;
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
+    const themeColor = theme === "dark" ? "#0d1210" : "#ffffff";
+    document.querySelectorAll('meta[name="theme-color"]').forEach((meta) => meta.setAttribute("content", themeColor));
   } catch (_) {}
 })();`;
 

@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect, useId, useRef } from "react";
+import { useEffect, useId, useRef, type PointerEvent as ReactPointerEvent } from "react";
 import { createPortal } from "react-dom";
+import { hapticTick } from "@/shared/utils/haptics";
 
 const focusableSelector = [
   "a[href]",
@@ -26,6 +27,8 @@ export function Modal({ open, title, children, onClose, description }: ModalProp
   const panelRef = useRef<HTMLElement>(null);
   const restoreFocusRef = useRef<HTMLElement | null>(null);
   const onCloseRef = useRef(onClose);
+  const dragStartRef = useRef<number | null>(null);
+  const dragOffsetRef = useRef(0);
 
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -36,6 +39,8 @@ export function Modal({ open, title, children, onClose, description }: ModalProp
     restoreFocusRef.current = document.activeElement instanceof HTMLElement ? document.activeElement : null;
     const previousOverflow = document.body.style.overflow;
     document.body.style.overflow = "hidden";
+    panelRef.current?.style.removeProperty("--sheet-drag-y");
+    panelRef.current?.classList.remove("is-dragging");
 
     const panel = panelRef.current;
     const firstFocusable = panel?.querySelector<HTMLElement>("[autofocus]") ?? panel?.querySelector<HTMLElement>(focusableSelector);
@@ -65,9 +70,40 @@ export function Modal({ open, title, children, onClose, description }: ModalProp
     return () => {
       document.body.style.overflow = previousOverflow;
       document.removeEventListener("keydown", onKey);
+      dragStartRef.current = null;
+      dragOffsetRef.current = 0;
       restoreFocusRef.current?.focus();
     };
   }, [open]);
+
+  function startDrag(event: ReactPointerEvent<HTMLSpanElement>) {
+    if (event.button !== 0) return;
+    dragStartRef.current = event.clientY;
+    dragOffsetRef.current = 0;
+    event.currentTarget.setPointerCapture(event.pointerId);
+    panelRef.current?.classList.add("is-dragging");
+  }
+
+  function moveDrag(event: ReactPointerEvent<HTMLSpanElement>) {
+    if (dragStartRef.current === null) return;
+    const offset = Math.max(0, event.clientY - dragStartRef.current);
+    dragOffsetRef.current = offset;
+    panelRef.current?.style.setProperty("--sheet-drag-y", `${offset}px`);
+  }
+
+  function endDrag(event: ReactPointerEvent<HTMLSpanElement>) {
+    if (dragStartRef.current === null) return;
+    dragStartRef.current = null;
+    event.currentTarget.releasePointerCapture?.(event.pointerId);
+    const shouldClose = dragOffsetRef.current >= 72;
+    dragOffsetRef.current = 0;
+    panelRef.current?.classList.remove("is-dragging");
+    panelRef.current?.style.setProperty("--sheet-drag-y", "0px");
+    if (shouldClose) {
+      hapticTick();
+      onCloseRef.current();
+    }
+  }
 
   if (!open || typeof document === "undefined") return null;
   return createPortal(
@@ -81,10 +117,16 @@ export function Modal({ open, title, children, onClose, description }: ModalProp
         aria-describedby={description ? descriptionId : undefined}
         onMouseDown={(event) => event.stopPropagation()}
       >
-        <span className="sheet-handle" aria-hidden="true" />
+        <span
+          className="sheet-handle"
+          aria-hidden="true"
+          onPointerDown={startDrag}
+          onPointerMove={moveDrag}
+          onPointerUp={endDrag}
+          onPointerCancel={endDrag}
+        />
         <div className="modal-head">
           <div>
-            
             <h2 id={titleId}>{title}</h2>
             {description ? <p id={descriptionId}>{description}</p> : null}
           </div>

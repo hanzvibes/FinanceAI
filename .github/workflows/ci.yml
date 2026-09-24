@@ -17,3 +17,37 @@ jobs:
       - run: npm run typecheck
       - run: npm test
       - run: npm run build
+      - name: Smoke test production server
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run start -- -p 3000 > /tmp/financeai-next.log 2>&1 &
+          APP_PID=$!
+          trap 'kill "$APP_PID" 2>/dev/null || true' EXIT
+
+          READY=0
+          for attempt in {1..30}; do
+            if curl --fail --silent --show-error http://127.0.0.1:3000/ > /tmp/financeai-home.html; then
+              READY=1
+              break
+            fi
+            sleep 1
+          done
+
+          if [ "$READY" -ne 1 ]; then
+            cat /tmp/financeai-next.log
+            exit 1
+          fi
+
+          grep -q "FinanceAI" /tmp/financeai-home.html
+
+          for route in /finance /calendar /personal /manifest.webmanifest /sw.js /offline.html; do
+            echo "Smoke testing $route"
+            curl --fail --silent --show-error "http://127.0.0.1:3000$route" > /tmp/financeai-smoke-response
+            test -s /tmp/financeai-smoke-response
+          done
+
+          if grep -Eiq "Application error|Internal Server Error|Unhandled Runtime Error" /tmp/financeai-home.html; then
+            cat /tmp/financeai-home.html
+            exit 1
+          fi

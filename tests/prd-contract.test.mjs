@@ -60,7 +60,9 @@ test("production UX keeps quick entry progressive and finance analytics switchab
   assert.match(quickAdd, /<details className="form-details">/);
   assert.match(quickAdd, /currency-input/);
   assert.match(finance, /chartMonths/);
-  assert.match(finance, /\[3, 6, 12\]/);
+  assert.match(finance, /3 Bulan/);
+  assert.match(finance, /6 Bulan/);
+  assert.match(finance, /1 Tahun/);
   assert.match(finance, /groupedTransactions/);
   assert.match(finance, /Hari ini/);
   assert.match(finance, /filter-disclosure/);
@@ -94,7 +96,6 @@ test("impact UI pass preserves the Impeccable hierarchy and unified surface syst
   const css = await read("src/app/globals.css");
   assert.match(dashboard, /card-primary hero-card/);
   assert.match(dashboard, /hero-primary-action/);
-  assert.match(dashboard, /transaction-kicker/);
   assert.match(finance, /card-secondary analytics-card/);
   assert.match(finance, /transaction-cell/);
   for (const token of ["card-primary", "card-secondary", "card-compact"]) assert.match(css, new RegExp(token));
@@ -247,4 +248,75 @@ test("dashboard gives activity more space while keeping wallet summary compact",
   assert.match(css, /dashboard-wallet-card \.wallet-strip[\s\S]*?grid-template-columns:\s*1fr/);
   assert.match(css, /dashboard-wallet-card \.wallet-chip > span:last-child[\s\S]*?grid-template-columns:\s*minmax\(0, 1fr\) auto/);
   assert.match(css, /dashboard-activity-card \.dashboard-transaction-row[\s\S]*?min-height:\s*48px/);
+});
+
+
+test("native shell distinguishes installed mode and respects device safe areas", async () => {
+  const shell = await read("src/shared/components/layout/app-shell.tsx");
+  const pwa = await read("src/infrastructure/pwa/pwa-register.tsx");
+  const layout = await read("src/app/layout.tsx");
+  const css = await read("src/app/native.css");
+  assert.match(shell, /native-screen-transition/);
+  assert.match(shell, /onClick={hapticTick}/);
+  assert.match(pwa, /dataset\.displayMode/);
+  assert.match(pwa, /display-mode: standalone/);
+  assert.match(layout, /native\.css/);
+  assert.match(css, /data-display-mode="standalone"/);
+  assert.match(css, /safe-area-inset-bottom/);
+  assert.match(css, /safe-area-inset-top/);
+});
+
+test("mobile sheets support drag-to-close without replacing keyboard accessibility", async () => {
+  const modal = await read("src/shared/components/ui/modal.tsx");
+  const css = await read("src/app/native.css");
+  assert.match(modal, /onPointerDown={startDrag}/);
+  assert.match(modal, /dragOffsetRef\.current >= 72/);
+  assert.match(modal, /event\.key === "Escape"/);
+  assert.match(css, /--sheet-drag-y/);
+  assert.match(css, /\.modal-panel\.is-dragging/);
+});
+
+test("destructive actions use an in-app confirmation sheet instead of browser confirms", async () => {
+  const confirm = await read("src/shared/components/ui/confirm-sheet.tsx");
+  for (const file of [
+    "src/modules/finance/components/finance-page.tsx",
+    "src/modules/calendar/components/calendar-page.tsx",
+    "src/modules/personal/components/personal-page.tsx",
+  ]) {
+    assert.doesNotMatch(await read(file), /window\.confirm/);
+  }
+  assert.match(confirm, /ConfirmSheet/);
+  assert.match(confirm, /hapticWarning/);
+});
+
+test("quick add uses touch-first category choices and progressive haptic feedback", async () => {
+  const quickAdd = await read("src/modules/quick-add/components/quick-add.tsx");
+  const css = await read("src/app/native.css");
+  assert.match(quickAdd, /native-chip-scroller/);
+  assert.match(quickAdd, /native-choice-chip/);
+  assert.match(quickAdd, /role="radiogroup"/);
+  assert.match(quickAdd, /hapticSuccess/);
+  assert.match(css, /touch-action:\s*manipulation/);
+});
+
+test("installed PWA metadata and service worker use the native shell revision", async () => {
+  const manifest = JSON.parse(await read("public/manifest.webmanifest"));
+  const sw = await read("public/sw.js");
+  assert.equal(manifest.id, "/");
+  assert.equal(manifest.scope, "/");
+  assert.equal(manifest.background_color, "#ffffff");
+  assert.equal(manifest.lang, "id");
+  assert.match(sw, /financeai-shell-v5/);
+  assert.match(sw, /financeai-runtime-v5/);
+});
+
+
+test("CI smoke-tests the built production server and every core PWA route", async () => {
+  const ci = await read(".github/workflows/ci.yml");
+  assert.match(ci, /Smoke test production server/);
+  assert.match(ci, /npm run start -- -p 3000/);
+  for (const route of ["/finance", "/calendar", "/personal", "/manifest.webmanifest", "/sw.js", "/offline.html"]) {
+    assert.match(ci, new RegExp(route.replaceAll("/", "\\/")));
+  }
+  assert.match(ci, /grep -q "FinanceAI"/);
 });

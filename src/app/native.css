@@ -1,0 +1,188 @@
+/* Native-feel layer: installed PWA shell, touch feedback, sheets, and mobile controls. */
+html, body { overscroll-behavior-y: none; }
+.native-screen-transition {
+  min-width: 0;
+  animation: native-screen-enter var(--motion-base) var(--ease-product);
+}
+@keyframes native-screen-enter {
+  from { opacity: .01; transform: translate3d(0, 6px, 0); }
+  to { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+
+.button,
+.small-action,
+.icon-button,
+.nav-link,
+.bottom-link,
+.fab,
+.quick-type,
+.native-choice-chip,
+.agenda-item,
+.entity-actions button,
+.table-actions button {
+  user-select: none;
+  touch-action: manipulation;
+}
+.button:active,
+.small-action:active,
+.icon-button:active,
+.fab:active,
+.quick-type:active,
+.native-choice-chip:active,
+.entity-actions button:active,
+.table-actions button:active {
+  transform: scale(.975);
+}
+.bottom-link:active svg { transform: scale(.9); }
+
+.native-choice-field { min-width: 0; }
+.native-chip-scroller {
+  display: flex;
+  gap: 7px;
+  overflow-x: auto;
+  padding: 2px 1px 4px;
+  overscroll-behavior-x: contain;
+  scroll-snap-type: x proximity;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+.native-chip-scroller::-webkit-scrollbar { display: none; }
+.native-choice-chip {
+  min-height: 38px;
+  flex: none;
+  padding: 0 12px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface);
+  color: var(--muted);
+  font-size: 11px;
+  font-weight: 700;
+  scroll-snap-align: start;
+}
+.native-choice-chip.active {
+  color: var(--brand);
+  background: var(--brand-soft);
+  border-color: color-mix(in srgb, var(--brand) 26%, var(--line));
+}
+
+.confirm-sheet { display: grid; justify-items: center; gap: 10px; padding: 4px 0 0; text-align: center; }
+.confirm-symbol {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: var(--brand-soft);
+  color: var(--brand);
+  font-size: 18px;
+  font-weight: 850;
+}
+.confirm-symbol.danger { background: var(--danger-soft); color: var(--danger); }
+.confirm-sheet p { max-width: 420px; margin: 0; color: var(--muted); font-size: 12px; line-height: 1.55; }
+.confirm-actions { width: 100%; margin-top: 8px; }
+.button.danger { background: var(--danger); border-color: var(--danger); color: white; }
+.button.danger:hover { filter: brightness(.96); }
+
+@media (max-width: 900px) {
+  .modal-panel {
+    transform: translate3d(0, var(--sheet-drag-y, 0px), 0);
+    transition: transform var(--motion-base) var(--ease-product);
+    will-change: transform;
+  }
+  .modal-panel.is-dragging { transition: none; }
+  .sheet-handle {
+    height: 18px;
+    width: 54px;
+    margin-top: -5px;
+    background: transparent;
+    position: relative;
+    cursor: grab;
+    touch-action: none;
+  }
+  .sheet-handle::after {
+    content: "";
+    position: absolute;
+    left: 50%;
+    top: 7px;
+    width: 38px;
+    height: 4px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: var(--line-strong);
+  }
+
+  .field input,
+  .field select,
+  .field textarea,
+  .filter-grid input,
+  .filter-grid select,
+  .agenda-filters input,
+  .agenda-filters select {
+    min-height: 48px;
+    border-radius: 12px;
+  }
+  .field select,
+  .filter-grid select,
+  .agenda-filters select {
+    appearance: auto;
+    -webkit-appearance: menulist;
+  }
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    min-height: 48px;
+    color-scheme: light;
+  }
+  :root[data-theme="dark"] input[type="date"],
+  :root[data-theme="dark"] input[type="time"],
+  :root[data-theme="dark"] input[type="datetime-local"] { color-scheme: dark; }
+
+  .native-choice-chip { min-height: 42px; padding-inline: 14px; }
+  .quick-type { min-height: 46px; }
+}
+
+:root[data-display-mode="standalone"] .app-shell { min-height: 100dvh; }
+@media (max-width: 900px) {
+  :root[data-display-mode="standalone"] .topbar {
+    height: calc(58px + env(safe-area-inset-top));
+    padding-top: env(safe-area-inset-top);
+    padding-left: max(16px, env(safe-area-inset-left));
+    padding-right: max(16px, env(safe-area-inset-right));
+    background: color-mix(in srgb, var(--surface) 96%, transparent);
+  }
+  :root[data-display-mode="standalone"] .content {
+    padding-top: 18px;
+    padding-left: max(18px, env(safe-area-inset-left));
+    padding-right: max(18px, env(safe-area-inset-right));
+    padding-bottom: calc(92px + env(safe-area-inset-bottom));
+  }
+  :root[data-display-mode="standalone"] .bottom-nav {
+    left: 0;
+    right: 0;
+    bottom: 0;
+    transform: none;
+    width: 100%;
+    max-width: none;
+    min-height: calc(66px + env(safe-area-inset-bottom));
+    padding: 5px max(10px, env(safe-area-inset-right)) max(5px, env(safe-area-inset-bottom)) max(10px, env(safe-area-inset-left));
+    border-left: 0;
+    border-right: 0;
+    border-bottom: 0;
+    border-radius: 18px 18px 0 0;
+    box-shadow: 0 -8px 28px rgba(20,35,29,.09);
+  }
+  :root[data-display-mode="standalone"] .bottom-link { min-height: 54px; }
+  :root[data-display-mode="standalone"] .fab {
+    right: max(18px, env(safe-area-inset-right));
+    bottom: calc(78px + env(safe-area-inset-bottom));
+  }
+  :root[data-display-mode="standalone"] .system-banner {
+    padding-left: max(18px, env(safe-area-inset-left));
+    padding-right: max(18px, env(safe-area-inset-right));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .native-screen-transition { animation: none; }
+  .modal-panel { transition: none; }
+}
