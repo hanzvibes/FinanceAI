@@ -1,0 +1,40 @@
+name: Bootstrap FinanceAI source
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: write
+
+jobs:
+  bootstrap:
+    if: ${{ hashFiles('bootstrap.zip') != '' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Expand verified source snapshot
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/financeai-source
+          mkdir -p /tmp/financeai-source
+          unzip -q bootstrap.zip -d /tmp/financeai-source
+          test -f /tmp/financeai-source/finance-ai/package.json
+          find . -mindepth 1 -maxdepth 1 ! -name .git ! -name bootstrap.zip -exec rm -rf {} +
+          cp -a /tmp/financeai-source/finance-ai/. .
+          rm -f bootstrap.zip
+          test -f package.json
+          test -f src/app/page.tsx
+
+      - name: Commit full source
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "feat: publish FinanceAI source"
+          git push origin HEAD:main
