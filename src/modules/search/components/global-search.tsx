@@ -17,6 +17,10 @@ const features: Result[] = [
 ];
 
 export function GlobalSearch() {
+  function finishNavigation() {
+    setQuery("");
+    if (document.activeElement instanceof HTMLElement) document.activeElement.blur();
+  }
   const { state } = useFinance(); const [query, setQuery] = useState(""); const normalized = query.trim().toLowerCase();
   const results = useMemo(() => {
     if (normalized.length < 2) return [];
@@ -30,5 +34,5 @@ export function GlobalSearch() {
     return items.slice(0, 10);
   }, [state, normalized]);
 
-  return <div className="global-search"><Icon name="search" size={18}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari transaksi, wallet, goal, agenda..." aria-label="Pencarian global" />{normalized.length >= 2 && <div className="search-results">{results.length ? results.map((item) => <Link href={item.href} className="search-result" key={item.id} onClick={() => setQuery("")}><span className="search-result-icon"><Icon name={item.icon} size={17}/></span><span><strong>{item.title}</strong><small>{item.detail}</small></span></Link>) : <div className="search-empty">Tidak ada hasil untuk “{query}”.</div>}</div>}</div>;
+  return <div className="global-search"><Icon name="search" size={18}/><input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Cari transaksi, wallet, goal, agenda..." aria-label="Pencarian global" />{normalized.length >= 2 && <div className="search-results">{results.length ? results.map((item) => <Link href={item.href} className="search-result" key={item.id} onClick={finishNavigation}><span className="search-result-icon"><Icon name={item.icon} size={17}/></span><span><strong>{item.title}</strong><small>{item.detail}</small></span></Link>) : <div className="search-empty">Tidak ada hasil untuk “{query}”.</div>}</div>}</div>;
 }

@@ -265,7 +265,7 @@ test("native shell distinguishes installed mode and respects device safe areas",
   const layout = await read("src/app/layout.tsx");
   const css = await read("src/app/native.css");
   assert.match(shell, /native-screen-transition/);
-  assert.match(shell, /onClick={hapticTick}/);
+  assert.match(shell, /onClick={prepareMobileNavigation}/);
   assert.match(pwa, /dataset\.displayMode/);
   assert.match(pwa, /display-mode: standalone/);
   assert.match(layout, /native\.css/);
@@ -327,4 +327,16 @@ test("CI smoke-tests the built production server and every core PWA route", asyn
     assert.match(ci, new RegExp(route.replaceAll("/", "\\/")));
   }
   assert.match(ci, /grep -q "FinanceAI"/);
+});
+
+
+test("small-screen navigation does not trigger browser auto-zoom", async () => {
+  const css = await read("src/app/native.css");
+  const shell = await read("src/shared/components/layout/app-shell.tsx");
+  const search = await read("src/modules/search/components/global-search.tsx");
+  assert.match(css, /@media \(max-width: 680px\)[\s\S]*?\.native-screen-transition[\s\S]*?animation-name:\s*native-screen-fade/);
+  assert.match(css, /\.field input,[\s\S]*?\.field select,[\s\S]*?font-size:\s*16px/);
+  assert.match(css, /-webkit-text-size-adjust:\s*100%/);
+  assert.match(shell, /document\.activeElement\.blur\(\)/);
+  assert.match(search, /document\.activeElement\.blur\(\)/);
 });

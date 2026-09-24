@@ -257,3 +257,39 @@ html, body { overscroll-behavior-y: none; }
   .wallet-type-picker { grid-template-columns: 1fr; }
   .wallet-type-option { min-height: 54px; }
 }
+
+
+/* Small-screen viewport stability: prevent browser auto-zoom and route-change scale illusions. */
+@media (max-width: 680px) {
+  html {
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+
+  .native-screen-transition {
+    animation-name: native-screen-fade;
+    transform: none;
+  }
+
+  .global-search input,
+  .inline-search input,
+  .field input,
+  .field select,
+  .field textarea,
+  .filter-grid input,
+  .filter-grid select,
+  .agenda-filters input,
+  .agenda-filters select,
+  .notes-toolbar input {
+    font-size: 16px;
+  }
+
+  .currency-input input {
+    font-size: 22px;
+  }
+}
+
+@keyframes native-screen-fade {
+  from { opacity: .01; }
+  to { opacity: 1; }
+}
