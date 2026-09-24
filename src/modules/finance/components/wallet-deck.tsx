@@ -1,14 +1,13 @@
 "use client";
 
-import { useEffect, useRef, useState, type CSSProperties, type PointerEvent as ReactPointerEvent } from "react";
+import { useState, type CSSProperties } from "react";
 import { Icon } from "@/shared/components/ui/icon";
 import type { Wallet, WalletType } from "@/shared/types/domain";
 import { formatCurrency } from "@/shared/utils/format";
-import { hapticTick } from "@/shared/utils/haptics";
+import { useSwipeDeck } from "@/shared/hooks/use-swipe-deck";
 
 type WalletWithBalance = Wallet & { balance: number };
 type CardRole = "current" | "next" | "next2" | "prev" | "neighbor";
-type GestureAxis = "pending" | "horizontal" | "vertical";
 
 type WalletDeckProps = {
   wallets: WalletWithBalance[];
@@ -17,217 +16,76 @@ type WalletDeckProps = {
   onToggleArchive(wallet: WalletWithBalance): void;
 };
 
-const SETTLE_MS = 320;
-const DRAG_REFERENCE = 360;
-const AXIS_LOCK_PX = 7;
-const AXIS_DOMINANCE = 1.15;
-
 function walletCardDigits(id: string) {
   let value = 0;
   for (let index = 0; index < id.length; index += 1) value = (value * 31 + id.charCodeAt(index)) % 10000;
   return String(value).padStart(4, "0");
 }
 
-function prefersReducedMotion() {
-  return typeof window !== "undefined" && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+function renderWalletFrame(stage: HTMLDivElement, dragX: number, width: number) {
+  const progress = Math.min(1, Math.abs(dragX) / Math.max(width, 1));
+  const towardNext = dragX < 0;
+  const towardPrev = dragX > 0;
+  const rotate = (dragX / Math.max(width, 1)) * 2.2;
+
+  for (const child of Array.from(stage.children)) {
+    if (!(child instanceof HTMLElement)) continue;
+
+    if (child.classList.contains("current")) {
+      child.style.transform = `translate3d(${dragX}px, 0, 0) scale(1) rotate(${rotate}deg)`;
+      child.style.opacity = "1";
+      continue;
+    }
+
+    if (child.classList.contains("next")) {
+      const lift = towardNext ? progress : 0;
+      child.style.transform = `translate3d(${10 * (1 - lift)}px, ${13 * (1 - lift)}px, 0) scale(${0.965 + 0.035 * lift})`;
+      child.style.opacity = String(0.96 + 0.04 * lift);
+      continue;
+    }
+
+    if (child.classList.contains("prev")) {
+      const lift = towardPrev ? progress : 0;
+      child.style.transform = `translate3d(${-10 * (1 - lift)}px, ${15 * (1 - lift)}px, 0) scale(${0.955 + 0.045 * lift})`;
+      child.style.opacity = String(0.93 + 0.07 * lift);
+      continue;
+    }
+
+    if (child.classList.contains("neighbor")) {
+      child.style.transform = `translate3d(0, ${14 * (1 - progress)}px, 0) scale(${0.96 + 0.04 * progress})`;
+      child.style.opacity = String(0.95 + 0.05 * progress);
+    }
+  }
+}
+
+function resetWalletFrame(stage: HTMLDivElement) {
+  for (const child of Array.from(stage.children)) {
+    if (!(child instanceof HTMLElement)) continue;
+    child.style.removeProperty("transform");
+    child.style.removeProperty("opacity");
+  }
 }
 
 export function WalletDeck({ wallets, typeLabels, onEdit, onToggleArchive }: WalletDeckProps) {
   const [activeId, setActiveId] = useState(() => wallets[0]?.id ?? "");
-  const [dragX, setDragX] = useState(0);
-  const [dragging, setDragging] = useState(false);
-  const [settling, setSettling] = useState(false);
-  const timerRef = useRef<number | null>(null);
-  const frameRef = useRef<number | null>(null);
-  const pendingDragXRef = useRef(0);
-  const gestureRef = useRef({
-    startX: 0,
-    startY: 0,
-    lastX: 0,
-    lastTime: 0,
-    velocity: 0,
-    deltaX: 0,
-    width: DRAG_REFERENCE,
-    pointerId: -1,
-    axis: "pending" as GestureAxis,
-  });
-
   const count = wallets.length;
   const foundIndex = wallets.findIndex((wallet) => wallet.id === activeId);
   const activeIndex = foundIndex >= 0 ? foundIndex : 0;
   const activeWallet = wallets[activeIndex];
 
-  useEffect(() => () => {
-    if (timerRef.current !== null) window.clearTimeout(timerRef.current);
-    if (frameRef.current !== null) window.cancelAnimationFrame(frameRef.current);
-  }, []);
-
-  function clearTimer() {
-    if (timerRef.current !== null) {
-      window.clearTimeout(timerRef.current);
-      timerRef.current = null;
-    }
-  }
-
-  function clearDragFrame() {
-    if (frameRef.current !== null) {
-      window.cancelAnimationFrame(frameRef.current);
-      frameRef.current = null;
-    }
-  }
-
-  function scheduleDragX(value: number) {
-    pendingDragXRef.current = value;
-    if (frameRef.current !== null) return;
-    frameRef.current = window.requestAnimationFrame(() => {
-      frameRef.current = null;
-      setDragX(pendingDragXRef.current);
-    });
-  }
-
-  function finishTransition(callback?: () => void) {
-    clearTimer();
-    const duration = prefersReducedMotion() ? 0 : SETTLE_MS;
-    timerRef.current = window.setTimeout(() => {
-      callback?.();
-      setDragX(0);
-      setDragging(false);
-      setSettling(false);
-      timerRef.current = null;
-    }, duration);
-  }
-
-  function move(direction: 1 | -1) {
-    if (count < 2 || settling) return;
-    clearDragFrame();
-    setDragging(false);
-    setSettling(true);
-    setDragX(direction === 1 ? -DRAG_REFERENCE * 1.45 : DRAG_REFERENCE * 1.45);
-    hapticTick();
-    finishTransition(() => {
-      const nextIndex = (activeIndex + direction + count) % count;
-      setActiveId(wallets[nextIndex].id);
-    });
-  }
-
-  function snapBack() {
-    clearDragFrame();
-    setDragging(false);
-    setSettling(true);
-    setDragX(0);
-    finishTransition();
-  }
-
-  function startGesture(event: ReactPointerEvent<HTMLDivElement>) {
-    if (count < 2 || settling) return;
-    if (event.pointerType === "mouse" && event.button !== 0) return;
-
-    clearTimer();
-    clearDragFrame();
-
-    const width = event.currentTarget.getBoundingClientRect().width || DRAG_REFERENCE;
-    const mouseGesture = event.pointerType === "mouse";
-    gestureRef.current = {
-      startX: event.clientX,
-      startY: event.clientY,
-      lastX: event.clientX,
-      lastTime: event.timeStamp,
-      velocity: 0,
-      deltaX: 0,
-      width,
-      pointerId: event.pointerId,
-      axis: mouseGesture ? "horizontal" : "pending",
-    };
-
-    if (mouseGesture) {
-      setDragging(true);
-      event.currentTarget.setPointerCapture(event.pointerId);
-    }
-  }
-
-  function moveGesture(event: ReactPointerEvent<HTMLDivElement>) {
-    const gesture = gestureRef.current;
-    if (gesture.pointerId !== event.pointerId || gesture.axis === "vertical") return;
-
-    const deltaX = event.clientX - gesture.startX;
-    const deltaY = event.clientY - gesture.startY;
-    const absoluteX = Math.abs(deltaX);
-    const absoluteY = Math.abs(deltaY);
-
-    if (gesture.axis === "pending") {
-      if (Math.max(absoluteX, absoluteY) < AXIS_LOCK_PX) return;
-
-      if (absoluteY > absoluteX * AXIS_DOMINANCE) {
-        gesture.axis = "vertical";
-        gesture.pointerId = -1;
-        setDragging(false);
-        return;
-      }
-
-      if (absoluteX < absoluteY * AXIS_DOMINANCE) return;
-
-      gesture.axis = "horizontal";
-      gesture.lastX = event.clientX;
-      gesture.lastTime = event.timeStamp;
-      gesture.velocity = 0;
-      setDragging(true);
-      event.currentTarget.setPointerCapture(event.pointerId);
-    }
-
-    event.preventDefault();
-
-    const elapsed = Math.max(1, event.timeStamp - gesture.lastTime);
-    const velocity = (event.clientX - gesture.lastX) / elapsed;
-    gesture.lastX = event.clientX;
-    gesture.lastTime = event.timeStamp;
-    gesture.velocity = velocity;
-
-    const resistanceStart = gesture.width * 0.82;
-    const resisted = absoluteX <= resistanceStart
-      ? absoluteX
-      : resistanceStart + (absoluteX - resistanceStart) * 0.22;
-    const limited = Math.sign(deltaX) * Math.min(gesture.width * 0.96, resisted);
-
-    gesture.deltaX = limited;
-    scheduleDragX(limited);
-  }
-
-  function endGesture(event: ReactPointerEvent<HTMLDivElement>, cancelled = false) {
-    const gesture = gestureRef.current;
-    if (gesture.pointerId !== event.pointerId) return;
-
-    const wasHorizontal = gesture.axis === "horizontal";
-    gesture.pointerId = -1;
-
-    if (!wasHorizontal) {
-      clearDragFrame();
-      setDragging(false);
-      return;
-    }
-
-    try {
-      if (event.currentTarget.hasPointerCapture(event.pointerId)) {
-        event.currentTarget.releasePointerCapture(event.pointerId);
-      }
-    } catch {
-      // Pointer capture may already be released by the browser.
-    }
-
-    if (cancelled) {
-      snapBack();
-      return;
-    }
-
-    const velocity = gesture.velocity;
-    const releaseX = gesture.deltaX;
-    const shouldCommit = Math.abs(releaseX) >= Math.min(88, gesture.width * 0.18) || Math.abs(velocity) > 0.48;
-    if (!shouldCommit || releaseX === 0) {
-      snapBack();
-      return;
-    }
-
-    move(releaseX < 0 ? 1 : -1);
-  }
+  const {
+    stageRef,
+    move,
+    startGesture,
+    moveGesture,
+    endGesture,
+  } = useSwipeDeck({
+    count,
+    activeIndex,
+    onCommit: (nextIndex) => setActiveId(wallets[nextIndex].id),
+    renderFrame: renderWalletFrame,
+    resetFrame: resetWalletFrame,
+  });
 
   function roleFor(index: number): CardRole | null {
     if (index === activeIndex) return "current";
@@ -239,64 +97,13 @@ export function WalletDeck({ wallets, typeLabels, onEdit, onToggleArchive }: Wal
     return null;
   }
 
-  function cardStyle(role: CardRole, accent: string): CSSProperties {
-    const progress = Math.min(1, Math.abs(dragX) / DRAG_REFERENCE);
-    const towardNext = dragX < 0;
-    const towardPrev = dragX > 0;
-    let x = 0;
-    let y = 0;
-    let scale = 1;
-    let rotate = 0;
-    let opacity = 1;
-    let zIndex = 4;
-
-    if (role === "current") {
-      x = dragX;
-      rotate = dragX * 0.018;
-      opacity = 1 - Math.min(0.22, progress * 0.18);
-    } else if (role === "next") {
-      const lift = towardNext ? progress : 0;
-      x = 10 * (1 - lift);
-      y = 13 * (1 - lift);
-      scale = 0.965 + 0.035 * lift;
-      zIndex = 3;
-      opacity = 0.96 + 0.04 * lift;
-    } else if (role === "prev") {
-      const lift = towardPrev ? progress : 0;
-      x = -10 * (1 - lift);
-      y = 15 * (1 - lift);
-      scale = 0.955 + 0.045 * lift;
-      zIndex = 3;
-      opacity = 0.93 + 0.07 * lift;
-    } else if (role === "neighbor") {
-      const lift = progress;
-      x = (dragX >= 0 ? -10 : 10) * (1 - lift);
-      y = 14 * (1 - lift);
-      scale = 0.96 + 0.04 * lift;
-      zIndex = 3;
-      opacity = 0.95 + 0.05 * lift;
-    } else {
-      x = 16;
-      y = 26;
-      scale = 0.925;
-      zIndex = 2;
-      opacity = 0.78;
-    }
-
-    return {
-      "--wallet-accent": accent,
-      transform: `translate3d(${x}px, ${y}px, 0) scale(${scale}) rotate(${rotate}deg)`,
-      opacity,
-      zIndex,
-    } as CSSProperties;
-  }
-
   if (!activeWallet) return null;
 
   return (
     <div className="wallet-deck">
       <div
-        className={`wallet-deck-stage${dragging ? " is-dragging" : ""}${settling ? " is-settling" : ""}`}
+        ref={stageRef}
+        className="wallet-deck-stage"
         role="group"
         aria-label="Kartu wallet. Geser ke kiri atau kanan untuk berpindah wallet."
         aria-roledescription="carousel"
@@ -314,11 +121,12 @@ export function WalletDeck({ wallets, typeLabels, onEdit, onToggleArchive }: Wal
           const role = roleFor(index);
           if (!role) return null;
           const current = role === "current";
+
           return (
             <article
               className={`wallet-deck-card ${role}${wallet.archived ? " archived" : ""}`}
               key={wallet.id}
-              style={cardStyle(role, wallet.accent)}
+              style={{ "--wallet-accent": wallet.accent } as CSSProperties}
               aria-hidden={!current}
             >
               <div className="wallet-credit-surface" aria-label={current ? `${wallet.name}, saldo ${formatCurrency(wallet.balance)}` : undefined}>

@@ -222,15 +222,15 @@ test("wallet cards keep the physical-card visual inside the swipe deck", async (
 
 test("wallet deck is stacked, bidirectional, velocity-aware, and keyboard accessible", async () => {
   const deck = await read("src/modules/finance/components/wallet-deck.tsx");
+  const hook = await read("src/shared/hooks/use-swipe-deck.ts");
   const css = await read("src/app/native.css");
-  assert.match(deck, /onPointerDown={startGesture}/);
-  assert.match(deck, /onPointerMove={moveGesture}/);
-  assert.match(deck, /onPointerUp=\{\(event\) => endGesture\(event\)\}/);
-  assert.match(deck, /Math\.abs\(velocity\) > 0\.48/);
+  assert.match(deck, /useSwipeDeck/);
   assert.match(deck, /ArrowRight/);
   assert.match(deck, /ArrowLeft/);
   assert.match(deck, /aria-roledescription="carousel"/);
   assert.match(deck, /neighbor/);
+  assert.match(hook, /VELOCITY_PROJECTION_MS/);
+  assert.match(hook, /projectedX/);
   assert.match(css, /Wallet stacked swipe deck/);
   assert.match(css, /\.wallet-deck-card/);
   assert.match(css, /cubic-bezier\(\.2, \.92, \.24, 1\)/);
@@ -385,35 +385,53 @@ test("receipt deck mirrors a bill hierarchy and stays compact on narrow screens"
 });
 
 
-test("wallet deck axis-locks touch gestures and throttles drag updates to prevent page flicker", async () => {
+test("wallet deck keeps drag motion off React state and rebases without a painted jump", async () => {
   const deck = await read("src/modules/finance/components/wallet-deck.tsx");
+  const hook = await read("src/shared/hooks/use-swipe-deck.ts");
   const css = await read("src/app/native.css");
-  assert.match(deck, /startY/);
-  assert.match(deck, /GestureAxis/);
-  assert.match(deck, /AXIS_LOCK_PX/);
-  assert.match(deck, /absoluteY > absoluteX \* AXIS_DOMINANCE/);
-  assert.match(deck, /window\.requestAnimationFrame/);
-  assert.match(deck, /setPointerCapture/);
-  assert.doesNotMatch(deck, /\.focus\(\{ preventScroll: true \}\)/);
+  assert.match(deck, /useSwipeDeck/);
+  assert.doesNotMatch(deck, /setDragX/);
+  assert.match(hook, /GestureAxis/);
+  assert.match(hook, /AXIS_LOCK_PX/);
+  assert.match(hook, /gesture\.startX = event\.clientX/);
+  assert.match(hook, /window\.requestAnimationFrame/);
+  assert.match(hook, /useLayoutEffect/);
+  assert.match(hook, /transitionend/);
+  assert.match(hook, /setPointerCapture/);
+  assert.match(css, /is-rebasing/);
   assert.match(css, /touch-action:\s*pan-y pinch-zoom/);
   assert.match(css, /overscroll-behavior-x:\s*contain/);
-  assert.doesNotMatch(css, /perspective:\s*1000px/);
+  assert.doesNotMatch(css, /filter 240ms ease/);
 });
 
 
-test("transaction receipt deck is bidirectional, velocity-aware, axis-locked, and keyboard accessible", async () => {
+test("transaction receipt deck shares the compositor-first swipe engine and stays keyboard accessible", async () => {
   const deck = await read("src/modules/finance/components/transaction-receipt-deck.tsx");
+  const hook = await read("src/shared/hooks/use-swipe-deck.ts");
   const css = await read("src/app/native.css");
-  assert.match(deck, /GestureAxis/);
-  assert.match(deck, /AXIS_LOCK_PX/);
-  assert.match(deck, /absoluteY > absoluteX \* AXIS_DOMINANCE/);
-  assert.match(deck, /Math\.abs\(gesture\.velocity\) > 0\.48/);
-  assert.match(deck, /window\.requestAnimationFrame/);
-  assert.match(deck, /setPointerCapture/);
+  assert.match(deck, /useSwipeDeck/);
+  assert.doesNotMatch(deck, /setDragX/);
   assert.match(deck, /ArrowRight/);
   assert.match(deck, /ArrowLeft/);
   assert.match(deck, /roleFor/);
+  assert.match(hook, /AXIS_DOMINANCE/);
+  assert.match(hook, /VELOCITY_PROJECTION_MS/);
+  assert.match(hook, /transitionend/);
   assert.match(css, /touch-action:\s*pan-y pinch-zoom/);
+  assert.match(css, /is-rebasing/);
   assert.match(css, /cubic-bezier\(\.2, \.92, \.24, 1\)/);
   assert.match(css, /prefers-reduced-motion/);
+});
+
+
+test("swipe engine avoids timer-driven card swaps and per-frame React rendering", async () => {
+  const hook = await read("src/shared/hooks/use-swipe-deck.ts");
+  const wallet = await read("src/modules/finance/components/wallet-deck.tsx");
+  const receipt = await read("src/modules/finance/components/transaction-receipt-deck.tsx");
+  assert.match(hook, /transitionend/);
+  assert.match(hook, /useLayoutEffect/);
+  assert.match(hook, /renderFrame\(stage/);
+  assert.doesNotMatch(hook, /setDragX/);
+  assert.doesNotMatch(wallet, /SETTLE_MS/);
+  assert.doesNotMatch(receipt, /SETTLE_MS/);
 });
