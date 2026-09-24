@@ -1,0 +1,14 @@
+{
+  "name": "FinanceAI",
+  "short_name": "FinanceAI",
+  "description": "Personal finance and life dashboard",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f4f7f5",
+  "theme_color": "#123c33",
+  "orientation": "any",
+  "icons": [
+    {"src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable"},
+    {"src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable"}
+  ]
+}
