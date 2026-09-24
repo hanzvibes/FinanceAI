@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useId, useRef } from "react";
+import { createPortal } from "react-dom";
 
 const focusableSelector = [
   "a[href]",
@@ -68,8 +69,8 @@ export function Modal({ open, title, children, onClose, description }: ModalProp
     };
   }, [open]);
 
-  if (!open) return null;
-  return (
+  if (!open || typeof document === "undefined") return null;
+  return createPortal(
     <div className="modal-backdrop" role="presentation" onMouseDown={onClose}>
       <section
         ref={panelRef}
@@ -91,6 +92,7 @@ export function Modal({ open, title, children, onClose, description }: ModalProp
         </div>
         <div className="modal-body">{children}</div>
       </section>
-    </div>
+    </div>,
+    document.body
   );
 }

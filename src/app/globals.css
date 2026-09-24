@@ -851,7 +851,7 @@ html, body, .sidebar, .topbar, .card, .stat-card, .global-search, .bottom-nav,
 :root[data-theme="dark"] .toast { background: #e7efeb; color: #152019; }
 :root[data-theme="dark"] .skeleton { background: linear-gradient(100deg, #1a231f 20%, #26322c 40%, #1a231f 60%); background-size: 200% 100%; }
 
-.page-stack { animation: page-enter .28s ease both; }
+.page-stack { animation: page-enter .28s ease; }
 @keyframes page-enter { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: none; } }
 
 @media (hover: hover) and (pointer: fine) {

@@ -154,3 +154,13 @@ test("modal matches the mobile navigation breakpoint and stays inside the dynami
   assert.match(css, /env\(safe-area-inset-top\)/);
   assert.match(css, /env\(safe-area-inset-bottom\)/);
 });
+
+
+test("modal escapes page stacking contexts through a body portal", async () => {
+  const modal = await read("src/shared/components/ui/modal.tsx");
+  const css = await read("src/app/globals.css");
+  assert.match(modal, /createPortal/);
+  assert.match(modal, /document\.body/);
+  assert.match(modal, /typeof document === "undefined"/);
+  assert.doesNotMatch(css, /\.page-stack \{ animation: page-enter \.28s ease both; \}/);
+});
