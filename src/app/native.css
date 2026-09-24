@@ -1,13 +1,6 @@
 /* Native-feel layer: installed PWA shell, touch feedback, sheets, and mobile controls. */
 html, body { overscroll-behavior-y: none; }
-.native-screen-transition {
-  min-width: 0;
-  animation: native-screen-enter var(--motion-base) var(--ease-product);
-}
-@keyframes native-screen-enter {
-  from { opacity: .01; transform: translate3d(0, 6px, 0); }
-  to { opacity: 1; transform: translate3d(0, 0, 0); }
-}
+/* Whole-screen route fades are intentionally avoided to prevent remount flicker. */
 
 .button,
 .small-action,
@@ -183,7 +176,6 @@ html, body { overscroll-behavior-y: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .native-screen-transition { animation: none; }
   .modal-panel { transition: none; }
 }
 
@@ -266,11 +258,6 @@ html, body { overscroll-behavior-y: none; }
     text-size-adjust: 100%;
   }
 
-  .native-screen-transition {
-    animation-name: native-screen-fade;
-    transform: none;
-  }
-
   .global-search input,
   .inline-search input,
   .field input,
@@ -288,12 +275,6 @@ html, body { overscroll-behavior-y: none; }
     font-size: 22px;
   }
 }
-
-@keyframes native-screen-fade {
-  from { opacity: .01; }
-  to { opacity: 1; }
-}
-
 
 /* ========================================================================== */
 /* Wallet stacked swipe deck                                                   */

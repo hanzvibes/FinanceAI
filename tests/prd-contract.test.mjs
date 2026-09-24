@@ -278,11 +278,13 @@ test("native shell distinguishes installed mode and respects device safe areas",
   const pwa = await read("src/infrastructure/pwa/pwa-register.tsx");
   const layout = await read("src/app/layout.tsx");
   const css = await read("src/app/native.css");
-  assert.match(shell, /native-screen-transition/);
   assert.match(shell, /onClick={prepareMobileNavigation}/);
   assert.match(pwa, /dataset\.displayMode/);
   assert.match(pwa, /display-mode: standalone/);
   assert.match(layout, /native\.css/);
+  assert.match(layout, /dataset\.displayMode/);
+  assert.match(layout, /display-mode: standalone/);
+  assert.doesNotMatch(shell, /key={pathname}/);
   assert.match(css, /data-display-mode="standalone"/);
   assert.match(css, /safe-area-inset-bottom/);
   assert.match(css, /safe-area-inset-top/);
@@ -348,7 +350,7 @@ test("small-screen navigation does not trigger browser auto-zoom", async () => {
   const css = await read("src/app/native.css");
   const shell = await read("src/shared/components/layout/app-shell.tsx");
   const search = await read("src/modules/search/components/global-search.tsx");
-  assert.match(css, /@media \(max-width: 680px\)[\s\S]*?\.native-screen-transition[\s\S]*?animation-name:\s*native-screen-fade/);
+  assert.doesNotMatch(css, /native-screen-transition|native-screen-fade/);
   assert.match(css, /\.field input,[\s\S]*?\.field select,[\s\S]*?font-size:\s*16px/);
   assert.match(css, /-webkit-text-size-adjust:\s*100%/);
   assert.match(shell, /document\.activeElement\.blur\(\)/);
@@ -460,4 +462,19 @@ test("swipe decks preserve the proven left path while pre-rendering backward dep
   assert.match(wallet, /classList\.contains\("far"\)[\s\S]{0,220}?towardPrev/);
   assert.match(receipt, /classList\.contains\("far"\)[\s\S]{0,240}?towardPrev/);
   assert.match(css, /opacity var\(--deck-settle-duration/);
+});
+
+
+test("route navigation avoids full-screen remounts and opacity fades", async () => {
+  const shell = await read("src/shared/components/layout/app-shell.tsx");
+  const layout = await read("src/app/layout.tsx");
+  const nativeCss = await read("src/app/native.css");
+  const globalCss = await read("src/app/globals.css");
+
+  assert.doesNotMatch(shell, /key={pathname}/);
+  assert.doesNotMatch(shell, /native-screen-transition/);
+  assert.doesNotMatch(nativeCss, /native-screen-enter|native-screen-fade/);
+  assert.doesNotMatch(globalCss, /\.page-stack\s*\{\s*animation:/);
+  assert.match(layout, /dataset\.displayMode/);
+  assert.match(layout, /display-mode: standalone/);
 });

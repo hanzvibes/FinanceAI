@@ -33,6 +33,8 @@ const themeScript = `
     const stored = localStorage.getItem("financeai-theme");
     const preferred = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
     const theme = stored === "dark" || stored === "light" ? stored : preferred;
+    const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
+    document.documentElement.dataset.displayMode = standalone ? "standalone" : "browser";
     document.documentElement.dataset.theme = theme;
     document.documentElement.style.colorScheme = theme;
     const themeColor = theme === "dark" ? "#0d1210" : "#ffffff";
