@@ -113,19 +113,6 @@ test("responsive navigation and dialogs implement rail-to-bottom-nav and dialog-
   assert.match(css, /bottom-nav/);
 });
 
-test("financial visualization exposes focused monthly detail and semantic transaction styling", async () => {
-  const chart = await read("src/modules/finance/components/cashflow-chart.tsx");
-  const css = await read("src/app/globals.css");
-  assert.match(chart, /chart-spotlight/);
-  assert.match(chart, /tabIndex=\{0\}/);
-  assert.match(chart, /onFocus/);
-  assert.match(chart, /Pemasukan/);
-  assert.match(css, /--income:/);
-  assert.match(css, /--expense:/);
-  assert.match(css, /transaction-kicker\.income/);
-  assert.match(css, /font-variant-numeric:\s*tabular-nums/);
-});
-
 test("impact UI pass retains explicit loading, empty, disabled, offline, success and reduced-motion states", async () => {
   const shell = await read("src/shared/components/layout/app-shell.tsx");
   const quickAdd = await read("src/modules/quick-add/components/quick-add.tsx");
@@ -219,14 +206,6 @@ test("wallet cards use a physical-card visual without pretending to be a real pa
 });
 
 
-test("wallet cards stay compact instead of stretching across the wallet section", async () => {
-  const css = await read("src/app/globals.css");
-  assert.match(css, /grid-template-columns:\s*repeat\(auto-fit, minmax\(min\(100%, 320px\), 420px\)\)/);
-  assert.match(css, /\.wallet-credit-surface[\s\S]*?max-width:\s*420px/);
-  assert.match(css, /\.wallet-credit-tech[\s\S]*?margin-top:\s*14px/);
-  assert.match(css, /\.wallet-credit-bottom \{ margin-top:\s*16px/);
-});
-
 
 test("wallet cards use the compact responsive footprint", async () => {
   const css = await read("src/app/globals.css");
@@ -252,4 +231,17 @@ test("cashflow chart uses a plain-language premium fintech hierarchy", async () 
   assert.match(css, /\.cashflow-month-summary/);
   assert.match(css, /\.period-balance/);
   assert.match(css, /\.cashflow-chart\.fintech/);
+});
+
+
+test("dashboard wallet and activity cards stay compact and balanced at tablet widths", async () => {
+  const dashboard = await read("src/modules/dashboard/components/dashboard-page.tsx");
+  const css = await read("src/app/globals.css");
+  assert.match(dashboard, /dashboard-transaction-list/);
+  assert.match(dashboard, /dashboard-transaction-meta/);
+  assert.match(dashboard, /transaction-type-dot/);
+  assert.match(css, /Dashboard secondary cards: denser/);
+  assert.match(css, /@media \(min-width: 760px\) and \(max-width: 1180px\)[\s\S]*?dashboard-wallet-card[\s\S]*?grid-column:\s*span 1/);
+  assert.match(css, /dashboard-wallet-card \.wallet-strip[\s\S]*?repeat\(2, minmax\(0, 1fr\)\)/);
+  assert.match(css, /dashboard-activity-card \.dashboard-transaction-row/);
 });

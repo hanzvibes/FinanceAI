@@ -1680,3 +1680,128 @@ html, body, .sidebar, .topbar, .card, .stat-card, .global-search, .bottom-nav,
   .wallet-credit-owner strong { font-size: 9px; }
   .wallet-credit-balance strong { font-size: 14px; }
 }
+
+
+/* Dashboard secondary cards: denser, balanced, easier to scan. */
+.dashboard-wallet-card,
+.dashboard-activity-card {
+  align-self: start;
+  padding: 18px;
+}
+.dashboard-wallet-card .card-head,
+.dashboard-activity-card .card-head {
+  align-items: center;
+  margin-bottom: 12px;
+}
+.dashboard-wallet-card .section-helper,
+.dashboard-activity-card .section-helper {
+  margin-top: 3px;
+  max-width: 360px;
+  font-size: 10px;
+}
+.dashboard-wallet-card .wallet-strip {
+  min-height: 0;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+.dashboard-wallet-card .wallet-chip {
+  min-height: 66px;
+  gap: 9px;
+  padding: 10px 11px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  background: var(--surface-subtle);
+}
+.dashboard-wallet-card .wallet-chip + .wallet-chip {
+  border-left: 1px solid var(--line);
+  padding-left: 11px;
+}
+.dashboard-wallet-card .wallet-dot {
+  width: 4px;
+  height: 34px;
+}
+.dashboard-wallet-card .wallet-chip small {
+  font-size: 10px;
+  line-height: 1.2;
+}
+.dashboard-wallet-card .wallet-chip strong {
+  margin-top: 2px;
+  font-size: 14px;
+  line-height: 1.15;
+  letter-spacing: -.025em;
+  font-variant-numeric: tabular-nums;
+}
+
+.dashboard-activity-card .transaction-list {
+  display: grid;
+  gap: 0;
+}
+.dashboard-activity-card .dashboard-transaction-row {
+  grid-template-columns: 32px minmax(0, 1fr) auto;
+  min-height: 52px;
+  gap: 10px;
+  padding: 6px 0;
+}
+.dashboard-activity-card .transaction-icon {
+  width: 30px;
+  height: 30px;
+  border-radius: 9px;
+}
+.dashboard-activity-card .transaction-main {
+  gap: 3px;
+}
+.dashboard-activity-card .transaction-main > strong {
+  font-size: 12px;
+  line-height: 1.2;
+}
+.dashboard-transaction-meta {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.dashboard-transaction-meta small {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.transaction-type-dot {
+  width: 5px;
+  height: 5px;
+  flex: none;
+  border-radius: 50%;
+  background: var(--neutral);
+}
+.transaction-type-dot.income { background: var(--income); }
+.transaction-type-dot.expense { background: var(--expense); }
+.transaction-type-dot.transfer { background: var(--transfer); }
+.dashboard-activity-card .money {
+  padding-left: 10px;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: right;
+}
+
+@media (min-width: 760px) and (max-width: 1180px) {
+  .dashboard-priority-grid .dashboard-wallet-card,
+  .dashboard-priority-grid .dashboard-activity-card {
+    grid-column: span 1;
+  }
+}
+
+@media (max-width: 759px) {
+  .dashboard-wallet-card .wallet-strip { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 520px) {
+  .dashboard-wallet-card,
+  .dashboard-activity-card { padding: 16px; }
+  .dashboard-wallet-card .wallet-strip { grid-template-columns: 1fr; }
+  .dashboard-wallet-card .wallet-chip { min-height: 58px; }
+  .dashboard-activity-card .dashboard-transaction-row {
+    grid-template-columns: 30px minmax(0, 1fr) auto;
+    min-height: 50px;
+  }
+  .dashboard-activity-card .money { font-size: 11px; }
+}
