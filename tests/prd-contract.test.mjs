@@ -202,3 +202,18 @@ test("light UI uses a pure white canvas and removes decorative kicker text", asy
     assert.doesNotMatch(source, /className="modal-kicker"/);
   }
 });
+
+
+test("wallet cards use a physical-card visual without pretending to be a real payment card", async () => {
+  const finance = await read("src/modules/finance/components/finance-page.tsx");
+  const css = await read("src/app/globals.css");
+  assert.match(finance, /wallet-credit-surface/);
+  assert.match(finance, /wallet-chip-visual/);
+  assert.match(finance, /wallet-credit-number/);
+  assert.match(finance, /walletCardDigits/);
+  assert.match(finance, />FinanceAI</);
+  assert.doesNotMatch(finance, /VISA|Mastercard|MasterCard/);
+  assert.match(css, /aspect-ratio:\s*1\.586\s*\/\s*1/);
+  assert.match(css, /\.wallet-credit-surface/);
+  assert.match(css, /\.wallet-card-actions/);
+});

@@ -59,6 +59,12 @@ function dayLabel(key: string, today: Date) {
   return formatDate(`${key}T12:00:00`, { weekday: "long", day: "numeric", month: "long" });
 }
 
+function walletCardDigits(id: string) {
+  let value = 0;
+  for (let index = 0; index < id.length; index += 1) value = (value * 31 + id.charCodeAt(index)) % 10000;
+  return String(value).padStart(4, "0");
+}
+
 export function FinancePage() {
   const { state, addWallet, updateWallet, archiveWallet, addGoal, updateGoal, deleteGoal, updateTransaction, deleteTransaction } = useFinance();
   const [now] = useState(() => new Date());
@@ -207,10 +213,24 @@ export function FinancePage() {
       <article className="card card-secondary finance-wallets">
         <div className="card-head"><div><h2>Wallet</h2><p className="section-helper">Saldo dihitung dari saldo awal dan seluruh ledger.</p></div><button className="small-action" onClick={() => { setEditingWallet(null); setWalletOpen(true); }}><Icon name="plus" size={16}/>Tambah</button></div>
         {wallets.length ? <div className="wallet-grid">{wallets.map((wallet) => <article className={`wallet-card ${wallet.archived ? "archived" : ""}`} key={wallet.id} style={{ "--wallet-accent": wallet.accent } as React.CSSProperties}>
-          <div className="wallet-card-top"><span className="wallet-symbol"><Icon name="wallet" size={18}/></span><span className={`wallet-status ${wallet.archived ? "archived" : ""}`}>{wallet.archived ? "Diarsipkan" : "Aktif"}</span></div>
-          <div className="wallet-title"><div><h3>{wallet.name}</h3><small>{walletTypeLabels[wallet.type]}</small></div><strong>{formatCurrency(wallet.balance)}</strong></div>
-          <div className="entity-actions"><button type="button" aria-label={`Edit wallet ${wallet.name}`} onClick={() => { setEditingWallet(wallet); setWalletOpen(true); }}>Edit</button><button type="button" onClick={() => { const result = archiveWallet(wallet.id, !wallet.archived); flash(result.message ?? (wallet.archived ? "Wallet diaktifkan kembali." : "Wallet diarsipkan.")); }}>{wallet.archived ? "Aktifkan" : "Arsipkan"}</button></div>
-          <span className="wallet-accent"/>
+          <div className="wallet-credit-surface" aria-label={`${wallet.name}, saldo ${formatCurrency(wallet.balance)}`}>
+            <div className="wallet-credit-top">
+              <span className="wallet-card-brand"><strong>FinanceAI</strong><small>{walletTypeLabels[wallet.type]}</small></span>
+              <span className={`wallet-status ${wallet.archived ? "archived" : ""}`}>{wallet.archived ? "Diarsipkan" : "Aktif"}</span>
+            </div>
+            <div className="wallet-credit-tech" aria-hidden="true">
+              <span className="wallet-chip-visual"><i/><i/><i/><i/></span>
+              <span className="wallet-contactless"><i/><i/><i/></span>
+            </div>
+            <div className="wallet-credit-number" aria-label={`Nomor visual berakhir ${walletCardDigits(wallet.id)}`}>
+              <span>••••</span><span>••••</span><span>••••</span><strong>{walletCardDigits(wallet.id)}</strong>
+            </div>
+            <div className="wallet-credit-bottom">
+              <span className="wallet-credit-owner"><small>Wallet</small><strong>{wallet.name}</strong></span>
+              <span className="wallet-credit-balance"><small>Saldo</small><strong>{formatCurrency(wallet.balance)}</strong></span>
+            </div>
+          </div>
+          <div className="entity-actions wallet-card-actions"><button type="button" aria-label={`Edit wallet ${wallet.name}`} onClick={() => { setEditingWallet(wallet); setWalletOpen(true); }}>Edit</button><button type="button" onClick={() => { const result = archiveWallet(wallet.id, !wallet.archived); flash(result.message ?? (wallet.archived ? "Wallet diaktifkan kembali." : "Wallet diarsipkan.")); }}>{wallet.archived ? "Aktifkan" : "Arsipkan"}</button></div>
         </article>)}</div> : <div className="empty-panel"><Icon name="wallet"/><strong>Belum ada wallet</strong><span>Tambahkan tempat uangmu disimpan untuk mulai membangun ledger.</span></div>}
       </article>
       <article className="card card-compact allocation-card">
