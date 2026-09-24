@@ -217,3 +217,12 @@ test("wallet cards use a physical-card visual without pretending to be a real pa
   assert.match(css, /\.wallet-credit-surface/);
   assert.match(css, /\.wallet-card-actions/);
 });
+
+
+test("wallet cards stay compact instead of stretching across the wallet section", async () => {
+  const css = await read("src/app/globals.css");
+  assert.match(css, /grid-template-columns:\s*repeat\(auto-fit, minmax\(min\(100%, 320px\), 420px\)\)/);
+  assert.match(css, /\.wallet-credit-surface[\s\S]*?max-width:\s*420px/);
+  assert.match(css, /\.wallet-credit-tech[\s\S]*?margin-top:\s*14px/);
+  assert.match(css, /\.wallet-credit-bottom \{ margin-top:\s*16px/);
+});

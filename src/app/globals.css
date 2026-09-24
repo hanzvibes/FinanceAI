@@ -310,7 +310,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .stat-card strong { font-size: clamp(18px, 2vw, 24px); line-height: 1.15; letter-spacing: -.035em; font-variant-numeric: tabular-nums; }
 .stat-card small { color: var(--muted-2); font-size: 9px; }
 .finance-grid { display: grid; grid-template-columns: minmax(0, 2fr) minmax(300px, .9fr); gap: 14px; }
-.wallet-grid { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 16px; }
+.wallet-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 320px), 420px)); gap: 14px; justify-content: start; align-items: start; }
 .wallet-card {
   min-width: 0;
   display: grid;
@@ -321,9 +321,11 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   isolation: isolate;
   overflow: hidden;
   aspect-ratio: 1.586 / 1;
-  min-height: 190px;
-  padding: 18px 19px 17px;
-  border-radius: 18px;
+  width: 100%;
+  max-width: 420px;
+  min-height: 0;
+  padding: 16px 17px 15px;
+  border-radius: 17px;
   color: #fff;
   background:
     linear-gradient(135deg,
@@ -384,7 +386,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .wallet-status.archived { background: rgba(20,25,23,.28); color: rgba(255,255,255,.72); }
 .wallet-credit-tech {
-  margin-top: 23px;
+  margin-top: 14px;
   display: flex;
   align-items: center;
   gap: 10px;
@@ -424,7 +426,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 .wallet-contactless i:nth-child(2) { height: 78%; }
 .wallet-contactless i:nth-child(3) { height: 96%; }
 .wallet-credit-number {
-  margin-top: 19px;
+  margin-top: 14px;
   display: flex;
   align-items: center;
   gap: 11px;
@@ -436,7 +438,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
 }
 .wallet-credit-number span { letter-spacing: .13em; opacity: .78; }
 .wallet-credit-number strong { font: inherit; font-weight: 760; color: #fff; }
-.wallet-credit-bottom { margin-top: 22px; align-items: end; }
+.wallet-credit-bottom { margin-top: 16px; align-items: end; }
 .wallet-credit-owner,
 .wallet-credit-balance { display: grid; gap: 3px; min-width: 0; }
 .wallet-credit-owner small,
@@ -462,7 +464,7 @@ button:focus-visible, a:focus-visible, input:focus-visible, textarea:focus-visib
   font-variant-numeric: tabular-nums;
 }
 .wallet-card-actions {
-  min-height: 32px;
+  min-height: 30px;
   padding: 0 3px;
 }
 .wallet-card-actions button { font-size: 10px; }
@@ -1577,17 +1579,20 @@ html, body, .sidebar, .topbar, .card, .stat-card, .global-search, .bottom-nav,
 }
 
 @media (max-width: 760px) {
-  .wallet-grid { grid-template-columns: 1fr; gap: 14px; }
-  .wallet-credit-surface { min-height: 0; padding: 18px; border-radius: 17px; }
-  .wallet-credit-tech { margin-top: 20px; }
-  .wallet-credit-number { margin-top: 18px; }
-  .wallet-credit-bottom { margin-top: 20px; }
+  .wallet-grid { grid-template-columns: 1fr; gap: 12px; }
+  .wallet-card { width: 100%; max-width: 420px; }
+  .wallet-credit-surface { max-width: 100%; padding: 16px; border-radius: 16px; }
+  .wallet-credit-tech { margin-top: 13px; }
+  .wallet-credit-number { margin-top: 13px; }
+  .wallet-credit-bottom { margin-top: 15px; }
 }
 
 @media (max-width: 420px) {
-  .wallet-credit-surface { padding: 16px; border-radius: 16px; }
-  .wallet-credit-tech { margin-top: 16px; }
-  .wallet-credit-number { gap: 8px; font-size: 13px; }
-  .wallet-credit-bottom { margin-top: 18px; }
-  .wallet-credit-balance strong { font-size: 17px; }
+  .wallet-credit-surface { padding: 14px; border-radius: 15px; }
+  .wallet-credit-tech { margin-top: 11px; }
+  .wallet-credit-number { margin-top: 11px; gap: 7px; font-size: 12px; }
+  .wallet-credit-bottom { margin-top: 13px; }
+  .wallet-card-brand strong { font-size: 13px; }
+  .wallet-credit-owner strong { font-size: 11px; }
+  .wallet-credit-balance strong { font-size: 16px; }
 }
