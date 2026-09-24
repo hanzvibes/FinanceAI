@@ -352,3 +352,17 @@ test("finance ledger switches to a compact mobile feed at the same breakpoint as
   assert.match(finance, /removeTransaction\(id\)/);
   assert.match(finance, />Hapus<\/button>/);
 });
+
+
+test("mobile ledger uses a native activity-feed hierarchy instead of dense table chrome", async () => {
+  const finance = await read("src/modules/finance/components/finance-page.tsx");
+  const css = await read("src/app/globals.css");
+  assert.match(finance, /transaction-mobile-meta/);
+  assert.match(finance, /transaksi\{transactions\.length !== state\.transactions\.length/);
+  assert.match(css, /Native-style mobile ledger polish/);
+  assert.match(css, /\.ledger-card \.type-filter-row[\s\S]*?overflow-x:\s*auto/);
+  assert.match(css, /\.ledger-card \.transaction-day-label[\s\S]*?position:\s*static/);
+  assert.match(css, /\.ledger-card \.transaction-row[\s\S]*?min-height:\s*50px/);
+  assert.match(css, /\.ledger-card \.transaction-mobile-meta/);
+  assert.match(css, /@media \(max-width: 520px\)[\s\S]*?min-height:\s*48px/);
+});

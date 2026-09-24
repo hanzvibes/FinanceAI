@@ -1927,3 +1927,177 @@ html, body, .sidebar, .topbar, .card, .stat-card, .global-search, .bottom-nav,
     text-overflow: ellipsis;
   }
 }
+
+
+/* Native-style mobile ledger polish: quieter chrome, denser rows, clearer scan path. */
+@media (max-width: 900px) {
+  .ledger-card {
+    padding: 14px 14px 16px;
+    border-radius: 16px;
+    box-shadow: none;
+  }
+
+  .ledger-card .card-head {
+    margin-bottom: 8px;
+  }
+  .ledger-card .transaction-head {
+    flex-direction: row;
+    align-items: center;
+    gap: 8px;
+  }
+  .ledger-card .transaction-head h2 {
+    font-size: 16px;
+  }
+  .ledger-card .transaction-head .section-helper {
+    margin-top: 2px;
+    font-size: 9px;
+    line-height: 1.2;
+  }
+  .ledger-card .filter-reset-inline {
+    min-height: 30px;
+    padding-inline: 9px;
+    font-size: 9px;
+    white-space: nowrap;
+  }
+
+  .ledger-card .type-filter-row {
+    width: 100%;
+    margin: 0 -2px 8px;
+    padding: 2px;
+    gap: 2px;
+    overflow-x: auto;
+    border: 0;
+    border-radius: 0;
+    background: transparent;
+    scrollbar-width: none;
+    scroll-snap-type: x proximity;
+  }
+  .ledger-card .type-filter-row::-webkit-scrollbar { display: none; }
+  .ledger-card .type-filter-row button {
+    flex: 0 0 auto;
+    min-height: 32px;
+    padding: 0 11px;
+    border: 1px solid var(--line);
+    border-radius: 999px;
+    background: var(--surface);
+    font-size: 9px;
+    scroll-snap-align: start;
+  }
+  .ledger-card .type-filter-row button.active {
+    border-color: color-mix(in srgb, var(--brand) 22%, var(--line));
+    background: var(--brand-soft);
+    box-shadow: none;
+  }
+
+  .ledger-card .filter-disclosure {
+    margin: 0 0 6px;
+    border: 0;
+  }
+  .ledger-card .filter-disclosure summary {
+    min-height: 34px;
+    justify-content: flex-start;
+    gap: 5px;
+    padding: 0 2px;
+    font-size: 9px;
+  }
+  .ledger-card .filter-disclosure summary span {
+    margin-left: 0;
+    font-size: 8px;
+  }
+  .ledger-card .filter-disclosure summary::after {
+    margin-left: auto;
+    font-size: 14px;
+  }
+
+  .ledger-card .transaction-day + .transaction-day {
+    margin-top: 8px;
+  }
+  .ledger-card .transaction-day-label {
+    position: static;
+    top: auto;
+    z-index: auto;
+    padding: 6px 2px 4px;
+    border-bottom: 0;
+    background: transparent;
+  }
+  .ledger-card .transaction-day-label span {
+    color: var(--muted);
+    font-size: 9px;
+    font-weight: 760;
+  }
+  .ledger-card .transaction-day-label small {
+    color: var(--muted-2);
+    font-size: 8px;
+  }
+
+  .ledger-card .transaction-row {
+    position: relative;
+    min-height: 50px;
+    padding: 7px 2px;
+    border-bottom-color: color-mix(in srgb, var(--line) 72%, transparent);
+    border-radius: 0;
+    transition: background-color var(--motion-fast) var(--ease-product);
+  }
+  .ledger-card .transaction-row:active {
+    background: var(--surface-subtle);
+  }
+  .ledger-card .transaction-icon {
+    width: 27px;
+    height: 27px;
+    border-radius: 8px;
+  }
+  .ledger-card .transaction-main strong {
+    font-size: 11px;
+    line-height: 1.2;
+    font-weight: 740;
+  }
+  .ledger-card .transaction-mobile-meta {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+    color: var(--muted);
+    font-size: 8px;
+    line-height: 1.25;
+  }
+  .ledger-card .transaction-mobile-meta span {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+  .ledger-card .transaction-mobile-meta i {
+    flex: none;
+    font-style: normal;
+    color: var(--muted-2);
+  }
+  .ledger-card .transaction-row .money {
+    align-self: center;
+    min-width: 86px;
+    padding-left: 8px;
+    font-size: 10px;
+    font-weight: 820;
+    text-align: right;
+    letter-spacing: -.01em;
+  }
+}
+
+@media (max-width: 520px) {
+  .ledger-card {
+    margin-inline: -2px;
+    padding: 12px 12px 14px;
+  }
+  .ledger-card .transaction-head h2 { font-size: 15px; }
+  .ledger-card .transaction-row {
+    grid-template-columns: 27px minmax(0, 1fr) auto;
+    min-height: 48px;
+    gap: 7px;
+    padding-block: 6px;
+  }
+  .ledger-card .transaction-row .money {
+    min-width: 78px;
+    max-width: 106px;
+    font-size: 9px;
+  }
+  .ledger-card .transaction-day-label small { display: none; }
+}
