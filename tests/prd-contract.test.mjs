@@ -137,3 +137,11 @@ test("impact UI pass retains explicit loading, empty, disabled, offline, success
   assert.match(css, /empty-panel/);
   assert.match(css, /prefers-reduced-motion/);
 });
+
+
+test("wallet form has no color picker and assigns accents automatically", async () => {
+  const financePage = await read("src/modules/finance/components/finance-page.tsx");
+  assert.doesNotMatch(financePage, /type="color"/);
+  assert.doesNotMatch(financePage, /form\.get\("accent"\)/);
+  assert.match(financePage, /walletTypeAccents/);
+});
