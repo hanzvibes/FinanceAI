@@ -127,11 +127,19 @@ test("impact UI pass retains explicit loading, empty, disabled, offline, success
 });
 
 
-test("wallet form has no color picker and assigns accents automatically", async () => {
+test("wallet form uses a custom touch picker and assigns accents automatically", async () => {
   const financePage = await read("src/modules/finance/components/finance-page.tsx");
+  const nativeCss = await read("src/app/native.css");
   assert.doesNotMatch(financePage, /type="color"/);
   assert.doesNotMatch(financePage, /form\.get\("accent"\)/);
   assert.match(financePage, /walletTypeAccents/);
+  assert.match(financePage, /wallet-type-picker/);
+  assert.match(financePage, /role="radiogroup"/);
+  assert.match(financePage, /type="hidden" name="type" value={walletType}/);
+  assert.match(financePage, /setWalletType\(wallet\.type\)/);
+  assert.doesNotMatch(financePage, /description="Atur sumber saldo[\s\S]*?<select name="type"[\s\S]*?Simpan wallet/);
+  assert.match(nativeCss, /\.wallet-type-option\.active/);
+  assert.match(nativeCss, /@media \(max-width: 560px\)/);
 });
 
 

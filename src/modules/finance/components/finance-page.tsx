@@ -9,6 +9,7 @@ import { ConfirmSheet } from "@/shared/components/ui/confirm-sheet";
 import { useFinance } from "@/shared/providers/finance-provider";
 import type { FinancialGoal, Transaction, TransactionType, Wallet, WalletType } from "@/shared/types/domain";
 import { formatCurrency, formatDate, formatTime } from "@/shared/utils/format";
+import { hapticTick } from "@/shared/utils/haptics";
 
 const expenseCategories = ["Makanan", "Transportasi", "Belanja", "Tagihan", "Hiburan", "Kesehatan", "Pendidikan", "Rumah", "Langganan", "Lainnya"];
 const incomeCategories = ["Gaji", "Bonus", "Freelance", "Bisnis", "Investasi", "Refund", "Hadiah", "Lainnya"];
@@ -72,6 +73,7 @@ export function FinancePage() {
   const [walletOpen, setWalletOpen] = useState(false);
   const [goalOpen, setGoalOpen] = useState(false);
   const [editingWallet, setEditingWallet] = useState<Wallet | null>(null);
+  const [walletType, setWalletType] = useState<WalletType>("bank");
   const [editingGoal, setEditingGoal] = useState<FinancialGoal | null>(null);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
   const [selectedTransaction, setSelectedTransaction] = useState<Transaction | null>(null);
@@ -191,7 +193,7 @@ export function FinancePage() {
   return <div className="page-stack">
     <section className="page-heading finance-heading">
       <div><h1>Keuangan pribadi</h1><p>Saldo, arus kas, target, dan transaksi dengan ledger lokal sebagai sumber kebenaran.</p></div>
-      <div className="heading-actions"><button className="button ghost" onClick={() => { setEditingWallet(null); setWalletOpen(true); }}><Icon name="wallet" size={17}/>Wallet</button><button className="button primary" onClick={() => { setEditingGoal(null); setGoalOpen(true); }}><Icon name="target" size={17}/>Goal</button></div>
+      <div className="heading-actions"><button className="button ghost" onClick={() => { setEditingWallet(null); setWalletType("bank"); setWalletOpen(true); }}><Icon name="wallet" size={17}/>Wallet</button><button className="button primary" onClick={() => { setEditingGoal(null); setGoalOpen(true); }}><Icon name="target" size={17}/>Goal</button></div>
     </section>
 
     <section className="stats-grid finance-summary-grid" aria-label="Ringkasan finansial">
@@ -219,7 +221,7 @@ export function FinancePage() {
 
     <section className="finance-grid">
       <article className="card card-secondary finance-wallets">
-        <div className="card-head"><div><h2>Wallet</h2><p className="section-helper">Saldo dihitung dari saldo awal dan seluruh ledger.</p></div><button className="small-action" onClick={() => { setEditingWallet(null); setWalletOpen(true); }}><Icon name="plus" size={16}/>Tambah</button></div>
+        <div className="card-head"><div><h2>Wallet</h2><p className="section-helper">Saldo dihitung dari saldo awal dan seluruh ledger.</p></div><button className="small-action" onClick={() => { setEditingWallet(null); setWalletType("bank"); setWalletOpen(true); }}><Icon name="plus" size={16}/>Tambah</button></div>
         {wallets.length ? <div className="wallet-grid">{wallets.map((wallet) => <article className={`wallet-card ${wallet.archived ? "archived" : ""}`} key={wallet.id} style={{ "--wallet-accent": wallet.accent } as React.CSSProperties}>
           <div className="wallet-credit-surface" aria-label={`${wallet.name}, saldo ${formatCurrency(wallet.balance)}`}>
             <div className="wallet-credit-top">
@@ -238,7 +240,7 @@ export function FinancePage() {
               <span className="wallet-credit-balance"><small>Saldo</small><strong>{formatCurrency(wallet.balance)}</strong></span>
             </div>
           </div>
-          <div className="entity-actions wallet-card-actions"><button type="button" aria-label={`Edit wallet ${wallet.name}`} onClick={() => { setEditingWallet(wallet); setWalletOpen(true); }}>Edit</button><button type="button" onClick={() => { const result = archiveWallet(wallet.id, !wallet.archived); flash(result.message ?? (wallet.archived ? "Wallet diaktifkan kembali." : "Wallet diarsipkan.")); }}>{wallet.archived ? "Aktifkan" : "Arsipkan"}</button></div>
+          <div className="entity-actions wallet-card-actions"><button type="button" aria-label={`Edit wallet ${wallet.name}`} onClick={() => { setEditingWallet(wallet); setWalletType(wallet.type); setWalletOpen(true); }}>Edit</button><button type="button" onClick={() => { const result = archiveWallet(wallet.id, !wallet.archived); flash(result.message ?? (wallet.archived ? "Wallet diaktifkan kembali." : "Wallet diarsipkan.")); }}>{wallet.archived ? "Aktifkan" : "Arsipkan"}</button></div>
         </article>)}</div> : <div className="empty-panel"><Icon name="wallet"/><strong>Belum ada wallet</strong><span>Tambahkan tempat uangmu disimpan untuk mulai membangun ledger.</span></div>}
       </article>
       <article className="card card-compact allocation-card">
@@ -263,7 +265,36 @@ export function FinancePage() {
 
     <section className="card card-compact"><div className="card-head"><div><h2>Target finansial</h2></div><button className="small-action" onClick={() => { setEditingGoal(null); setGoalOpen(true); }}><Icon name="plus" size={16}/>Tambah</button></div>{state.goals.length ? <div className="goal-grid">{state.goals.map((goal) => { const progress = Math.min(100, Math.round((goal.currentAmount / goal.targetAmount) * 100)); return <article className="goal-card" key={goal.id}><div className="row-between"><span className="pill">{goal.status}</span><strong>{progress}%</strong></div><h3>{goal.name}</h3><p>{formatCurrency(goal.currentAmount, true)} dari {formatCurrency(goal.targetAmount, true)}</p><div className="progress"><span style={{ width: `${progress}%` }}/></div>{goal.targetDate && <small>Target {formatDate(goal.targetDate, { day: "2-digit", month: "short", year: "numeric" })}</small>}<div className="entity-actions"><button type="button" onClick={() => { setEditingGoal(goal); setGoalOpen(true); }}>Edit</button>{goal.status !== "completed" && <button type="button" onClick={() => updateGoal(goal.id, { status: goal.status === "paused" ? "active" : "paused" })}>{goal.status === "paused" ? "Lanjutkan" : "Pause"}</button>}<button type="button" onClick={() => updateGoal(goal.id, { status: "completed", currentAmount: goal.targetAmount })}>Selesai</button><button type="button" className="danger-link" onClick={() => removeGoal(goal.id)}>Hapus</button></div></article>; })}</div> : <div className="empty-panel"><Icon name="target"/><strong>Belum ada target finansial</strong><span>Buat target untuk memantau progress tabungan atau tujuan keuangan.</span></div>}</section>
 
-    <Modal open={walletOpen} onClose={() => { setWalletOpen(false); setEditingWallet(null); }} title={editingWallet ? "Edit wallet" : "Tambah wallet"} description="Atur sumber saldo yang akan dipakai oleh seluruh ledger."><form className="form-stack" onSubmit={submitWallet}><label className="field"><span>Nama wallet</span><input name="name" defaultValue={editingWallet?.name ?? ""} placeholder="Contoh: BCA" required/></label><div className="form-grid"><label className="field"><span>Tipe</span><select name="type" defaultValue={editingWallet?.type ?? "bank"}>{Object.entries(walletTypeLabels).map(([value, label]) => <option value={value} key={value}>{label}</option>)}</select></label><label className="field"><span>Saldo awal</span><input type="number" inputMode="numeric" name="balance" min="0" defaultValue={editingWallet?.initialBalance ?? 0}/></label></div><div className="modal-actions sticky-actions"><button type="button" className="button ghost" onClick={() => { setWalletOpen(false); setEditingWallet(null); }}>Batal</button><button className="button primary">Simpan wallet</button></div></form></Modal>
+    <Modal open={walletOpen} onClose={() => { setWalletOpen(false); setEditingWallet(null); }} title={editingWallet ? "Edit wallet" : "Tambah wallet"} description="Atur sumber saldo yang akan dipakai oleh seluruh ledger.">
+      <form className="form-stack" onSubmit={submitWallet}>
+        <label className="field"><span>Nama wallet</span><input name="name" defaultValue={editingWallet?.name ?? ""} placeholder="Contoh: BCA" required/></label>
+        <div className="field wallet-type-field">
+          <span>Tipe</span>
+          <input type="hidden" name="type" value={walletType}/>
+          <div className="wallet-type-picker" role="radiogroup" aria-label="Tipe wallet">
+            {(Object.entries(walletTypeLabels) as [WalletType, string][]).map(([value, label]) => (
+              <button
+                type="button"
+                key={value}
+                role="radio"
+                aria-checked={walletType === value}
+                className={walletType === value ? "wallet-type-option active" : "wallet-type-option"}
+                onClick={() => { hapticTick(); setWalletType(value); }}
+              >
+                <span className="wallet-type-swatch" style={{ background: walletTypeAccents[value] }} aria-hidden="true"/>
+                <span className="wallet-type-copy">
+                  <strong>{label}</strong>
+                  <small>{value === "bank" ? "Rekening bank" : value === "cash" ? "Uang tunai" : value === "ewallet" ? "Dompet digital" : value === "savings" ? "Tabungan khusus" : value === "investment" ? "Aset investasi" : value === "credit" ? "Limit kartu kredit" : "Sumber lainnya"}</small>
+                </span>
+                <span className="wallet-type-check" aria-hidden="true">{walletType === value ? "✓" : ""}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+        <label className="field"><span>Saldo awal</span><input type="number" inputMode="numeric" name="balance" min="0" defaultValue={editingWallet?.initialBalance ?? 0}/></label>
+        <div className="modal-actions sticky-actions"><button type="button" className="button ghost" onClick={() => { setWalletOpen(false); setEditingWallet(null); }}>Batal</button><button className="button primary">Simpan wallet</button></div>
+      </form>
+    </Modal>
 
     <Modal open={goalOpen} onClose={() => { setGoalOpen(false); setEditingGoal(null); }} title={editingGoal ? "Edit financial goal" : "Tambah financial goal"} description="Simpan target, progres, dan tenggat dalam satu tempat."><form className="form-stack" onSubmit={submitGoal}><label className="field"><span>Nama target</span><input name="name" defaultValue={editingGoal?.name ?? ""} placeholder="Contoh: Dana liburan" required/></label><div className="form-grid"><label className="field"><span>Target nominal</span><input type="number" inputMode="numeric" name="target" min="1" defaultValue={editingGoal?.targetAmount ?? ""} required/></label><label className="field"><span>Progress</span><input type="number" inputMode="numeric" name="current" min="0" defaultValue={editingGoal?.currentAmount ?? 0}/></label></div><div className="form-grid"><label className="field"><span>Target tanggal</span><input name="date" type="date" defaultValue={editingGoal?.targetDate ? dateInput(editingGoal.targetDate) : ""}/></label><label className="field"><span>Status</span><select name="status" defaultValue={editingGoal?.status ?? "active"}><option value="active">Active</option><option value="paused">Paused</option><option value="completed">Completed</option></select></label></div><div className="modal-actions sticky-actions"><button type="button" className="button ghost" onClick={() => { setGoalOpen(false); setEditingGoal(null); }}>Batal</button><button className="button primary">Simpan goal</button></div></form></Modal>
 
