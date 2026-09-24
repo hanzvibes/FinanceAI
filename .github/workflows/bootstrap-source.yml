@@ -2,22 +2,19 @@ name: Bootstrap FinanceAI source
 
 on:
   push:
-    branches: [main]
 
 permissions:
   contents: write
 
 jobs:
   bootstrap:
-    if: ${{ hashFiles('bootstrap.zip') != '' }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
 
-      - name: Expand verified source snapshot
-        shell: bash
+      - name: Expand source snapshot
         run: |
-          set -euo pipefail
+          set -e
           rm -rf /tmp/financeai-source
           mkdir -p /tmp/financeai-source
           unzip -q bootstrap.zip -d /tmp/financeai-source
@@ -29,12 +26,11 @@ jobs:
           test -f src/app/page.tsx
 
       - name: Commit full source
-        shell: bash
         run: |
-          set -euo pipefail
+          set -e
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
-          git diff --cached --quiet && exit 0
+          if git diff --cached --quiet; then exit 0; fi
           git commit -m "feat: publish FinanceAI source"
           git push origin HEAD:main
